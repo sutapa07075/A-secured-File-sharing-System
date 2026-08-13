@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create account</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="card">
+    <p class="eyebrow">Get started</p>
+    <h1>Create your account</h1>
+
+    <a class="btn-oauth" href="/auth/google">
+      <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.5 5.1 29.5 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.4-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.5 5.1 29.5 3 24 3c-7.7 0-14.3 4.4-17.7 10.7z"/><path fill="#4CAF50" d="M24 45c5.4 0 10.3-2 14-5.3l-6.5-5.4C29.4 35.7 26.8 36.6 24 36.6c-5.2 0-9.6-3.5-11.2-8.3l-6.6 5.1C9.5 40.6 16.2 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.2 5.6l6.5 5.4C41.5 36 45 30.6 45 24c0-1.4-.1-2.7-.4-3.5z"/></svg>
+      Continue with Google
+    </a>
+    <a class="btn-oauth" href="/auth/github">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      Continue with GitHub
+    </a>
+
+    <div class="divider">or</div>
+
+    <form id="registerForm" novalidate>
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" autocomplete="name">
+
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" autocomplete="email" required>
+
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" autocomplete="new-password" required>
+
+      <ul class="rules" id="rules">
+        <li id="rule-length"><span class="mark">✓</span> At least 6 characters</li>
+        <li id="rule-uppercase"><span class="mark">✓</span> One uppercase letter</li>
+        <li id="rule-number"><span class="mark">✓</span> One number</li>
+        <li id="rule-special"><span class="mark">✓</span> One special character</li>
+      </ul>
+
+      <button type="submit" class="btn-primary" id="submitBtn" disabled>Create account</button>
+      <div class="error-banner" id="errorBanner"></div>
+    </form>
+
+    <p class="footer-link">Already have an account? <a href="/login.html">Log in</a></p>
+  </div>
+
+  <script src="/js/register.js"></script>
+</body>
+</html>

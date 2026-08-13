@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="card">
+    <p class="eyebrow">Signed in</p>
+    <h1 id="greeting">Welcome</h1>
+    <p style="font-family: -apple-system, sans-serif; font-size: 14px; color:#5c5750;">
+      Your session will time out automatically after a period of inactivity, and you'll be
+      returned to the login page.
+    </p>
+    <button class="btn-primary" id="logoutBtn">Log out</button>
+  </div>
+
+  <div class="timeout-toast" id="timeoutToast">You were logged out due to inactivity.</div>
+
+  <script src="/js/session-guard.js"></script>
+  <script>
+    (async () => {
+      try {
+        const res = await fetch('/api/me');
+        if (!res.ok) { window.location.href = '/login.html'; return; }
+        const data = await res.json();
+        document.getElementById('greeting').textContent =
+          `Welcome, ${data.user.name || data.user.email}`;
+      } catch {
+        window.location.href = '/login.html';
+      }
+    })();
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.href = '/login.html';
+    });
+  </script>
+</body>
+</html>
