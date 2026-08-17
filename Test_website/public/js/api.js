@@ -56,6 +56,18 @@ async function requirePageAccess(allowedRoles) {
   }
 }
 
+// SQLite's datetime('now') returns "YYYY-MM-DD HH:MM:SS" — UTC, but with no
+// timezone marker. Handing that straight to `new Date(...)` makes browsers
+// parse it as LOCAL time instead of UTC, silently shifting it by the user's
+// UTC offset. Full ISO strings (from scheduledStart/End, which already have a
+// 'T' and usually a 'Z') are left untouched.
+function parseServerTimestamp(value) {
+  if (typeof value === 'string' && value.includes(' ') && !value.includes('T')) {
+    return new Date(value.replace(' ', 'T') + 'Z');
+  }
+  return new Date(value);
+}
+
 function escapeHtml(str) {
   if (str === null || str === undefined) return '';
   return String(str)
@@ -67,7 +79,7 @@ function escapeHtml(str) {
 
 function fmtDate(iso) {
   if (!iso) return '—';
-  const d = new Date(iso);
+  const d = parseServerTimestamp(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }

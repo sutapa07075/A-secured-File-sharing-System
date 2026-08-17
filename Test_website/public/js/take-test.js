@@ -73,7 +73,9 @@
     });
 
     // Countdown based on when this attempt started + the test's duration.
-    const deadline = new Date(new Date(startRes.submission.started_at).getTime() + test.duration_minutes * 60000);
+    // parseServerTimestamp (from api.js) correctly treats the server's
+    // "YYYY-MM-DD HH:MM:SS" as UTC regardless of the browser's own timezone.
+    const deadline = new Date(parseServerTimestamp(startRes.submission.started_at).getTime() + test.duration_minutes * 60000);
     countdownInterval = setInterval(() => {
       const msLeft = deadline - new Date();
       if (msLeft <= 0) {
