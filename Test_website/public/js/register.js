@@ -5,6 +5,28 @@
   const submitBtn = document.getElementById('submitBtn');
   const errorBanner = document.getElementById('errorBanner');
 
+  // ---------- Role toggle (shared by OAuth buttons and the form below) ----------
+  let selectedRole = 'student';
+  const roleButtons = document.querySelectorAll('.role-option');
+  const googleBtn = document.getElementById('googleOauthBtn');
+  const githubBtn = document.getElementById('githubOauthBtn');
+  const googleLabel = document.getElementById('googleOauthLabel');
+  const githubLabel = document.getElementById('githubOauthLabel');
+
+  function applyRole(role) {
+    selectedRole = role;
+    roleButtons.forEach((btn) => btn.classList.toggle('active', btn.dataset.role === role));
+    const roleName = role === 'teacher' ? 'Teacher' : 'Student';
+    googleBtn.href = `/auth/google?role=${role}`;
+    githubBtn.href = `/auth/github?role=${role}`;
+    googleLabel.textContent = `Continue with Google as ${roleName}`;
+    githubLabel.textContent = `Continue with GitHub as ${roleName}`;
+  }
+
+  roleButtons.forEach((btn) => {
+    btn.addEventListener('click', () => applyRole(btn.dataset.role));
+  });
+
   const ruleEls = {
     length: document.getElementById('rule-length'),
     uppercase: document.getElementById('rule-uppercase'),
@@ -56,7 +78,6 @@
     hideError();
 
     const name = document.getElementById('name').value.trim();
-    const role = document.getElementById('role').value;
     const email = document.getElementById('email').value.trim();
     const password = passwordInput.value;
 
@@ -73,7 +94,7 @@
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role }),
+        body: JSON.stringify({ name, email, password, role: selectedRole }),
       });
       const data = await res.json();
 
@@ -92,3 +113,4 @@
     }
   });
 })();
+
