@@ -23,7 +23,7 @@ function renderTopbar(user) {
   const bar = document.createElement('div');
   bar.className = 'topbar';
   bar.innerHTML = `
-    <div class="brand">TestHub</div>
+    <div class="brand">NITDGP TESTCENTRE</div>
     <div class="userbox">
       <span>${user.name || user.email} · <strong>${user.role}</strong></span>
       <button id="logoutBtn">Log out</button>
