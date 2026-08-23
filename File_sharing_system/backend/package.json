@@ -33,5 +33,9 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "allowScripts": {
+    "aws-sdk@2.1693.0": true,
+    "msgpackr-extract@3.0.4": true
   }
 }
