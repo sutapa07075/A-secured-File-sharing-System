@@ -57,11 +57,7 @@ Visit `http://localhost:5173`, sign in with Google, and you're on the dashboard.
 
 In Google Cloud Console → APIs & Services → Credentials:
 - Create an OAuth Client ID (Web application)
-<<<<<<< HEAD
-- Authorized redirect URI: `http://localhost:4000/api/auth/google/callback` (update according to your domain)
-=======
 - Authorized redirect URI: `http://localhost:5173/api/auth/google/callback` (update for production domain)
->>>>>>> 8bd2049840e0b460daaaeb136be9159058cbf414
 - Copy the Client ID/Secret into `.env`
 
 ## 4. Swapping in real KMS
@@ -88,7 +84,6 @@ environment. To go to production-grade:
 
 ```
 backend/
-  src/
     server.js              Express app, security headers, graceful shutdown
     db/
       schema.sql            Tables + Row-Level Security policies
