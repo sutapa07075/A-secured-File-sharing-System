@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vault — Your documents</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">&#9633;</span>
+      <span class="brand-name">Vault</span>
+    </div>
+    <button id="logoutBtn" class="btn-ghost">Sign out</button>
+  </header>
+
+  <main class="dashboard">
+    <section class="upload-zone" id="dropZone">
+      <input type="file" id="fileInput" hidden />
+      <div class="upload-inner">
+        <span class="upload-icon">&#8593;</span>
+        <p><strong>Drop a file</strong> or <button id="browseBtn" class="link-btn">browse</button></p>
+        <p class="hint">Encrypted in your browser session before upload. Max file size depends on server config.</p>
+      </div>
+      <div id="uploadProgress" class="progress-row" hidden>
+        <div class="progress-track"><div id="progressBar" class="progress-fill"></div></div>
+        <span id="progressLabel">0%</span>
+      </div>
+    </section>
+
+    <section class="doc-list-section">
+      <div class="section-head">
+        <h2>Your documents</h2>
+        <button id="refreshBtn" class="btn-ghost small">Refresh</button>
+      </div>
+      <div id="docList" class="doc-list"></div>
+      <p id="emptyState" class="empty-state" hidden>Nothing here yet — upload your first file above.</p>
+    </section>
+  </main>
+
+  <!-- Share modal -->
+  <div id="shareModal" class="modal-backdrop" hidden>
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Share "<span id="shareDocName"></span>"</h3>
+        <button id="closeShareModal" class="btn-ghost small">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="share-option">
+          <h4>Anyone with the link</h4>
+          <div class="row">
+            <select id="linkRole"><option value="view">Can view</option><option value="edit">Can edit</option></select>
+            <button id="createLinkBtn" class="btn-primary small">Create link</button>
+          </div>
+          <div id="linkResult" class="link-result" hidden>
+            <input id="linkResultInput" readonly />
+            <button id="copyLinkBtn" class="btn-ghost small">Copy</button>
+          </div>
+        </div>
+        <div class="share-option">
+          <h4>Invite a specific person</h4>
+          <div class="row">
+            <input id="granteeEmail" type="email" placeholder="name@company.com" />
+            <select id="granteeRole"><option value="view">Can view</option><option value="edit">Can edit</option></select>
+            <button id="inviteBtn" class="btn-primary small">Invite</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
