@@ -1,6 +1,10 @@
 const AWS = require('aws-sdk');
 const CircuitBreaker = require('opossum');
-const retry = require('p-retry');
+const pRetryModule = require('p-retry');
+// p-retry v5+ ships as an ESM default export; when CommonJS `require`s it, the
+// function lives on `.default` instead of being the module itself. Handle both
+// shapes so this works whether p-retry resolves to v4-style CJS or v5+ ESM interop.
+const retry = typeof pRetryModule === 'function' ? pRetryModule : pRetryModule.default;
 
 const s3 = new AWS.S3({
   endpoint: process.env.B2_ENDPOINT,
@@ -13,16 +17,21 @@ const s3 = new AWS.S3({
 const BUCKET = process.env.B2_BUCKET;
 
 const breakerOptions = {
-  timeout: 15000,          // fail fast after 15s
+  timeout: 60000,          // fail fast after 60s (was 15s — too tight for multi-MB managed uploads)
   errorThresholdPercentage: 50,
   resetTimeout: 10000
 };
 
-/** Upload an already-encrypted buffer/stream. Only ciphertext should ever reach here. */
+/** Upload an already-encrypted buffer/stream. Only ciphertext should ever reach here.
+ *  Uses the S3 managed upload (not putObject) because putObject requires a
+ *  known Content-Length upfront, which a live encryption stream doesn't have —
+ *  managed upload buffers/multiparts automatically for streams of unknown size. */
 async function uploadObject(key, body, contentType = 'application/octet-stream') {
   const breaker = new CircuitBreaker(
-    () => retry(() => s3.putObject({ Bucket: BUCKET, Key: key, Body: body, ContentType: contentType }).promise(),
-      { retries: 3, factor: 2, minTimeout: 500 }),
+    () => retry(() => new AWS.S3.ManagedUpload({
+      service: s3,
+      params: { Bucket: BUCKET, Key: key, Body: body, ContentType: contentType }
+    }).promise(), { retries: 3, factor: 2, minTimeout: 500 }),
     breakerOptions
   );
   return breaker.fire();

@@ -9,6 +9,8 @@ const logger = require('./utils/logger');
 const { generalLimiter } = require('./middleware/rateLimit');
 const authRoutes = require('./routes/auth');
 const documentRoutes = require('./routes/documents');
+const zkKeyRoutes = require('./routes/zkKeys');
+const zkDocumentRoutes = require('./routes/zkDocuments');
 const { router: healthRoutes } = require('./routes/health');
 const { pool } = require('./db/pool');
 
@@ -39,7 +41,11 @@ app.use(generalLimiter);
 // so we can pipe/encrypt bytes directly — see routes/documents.js. Those routes
 // apply their own raw-body parsers (express.raw / direct req.pipe). JSON parsing
 // is applied to everything else.
-const RAW_BODY_ROUTES = [/^\/api\/documents\/upload$/, /^\/api\/documents\/upload\/[^/]+\/chunk$/];
+const RAW_BODY_ROUTES = [
+  /^\/api\/documents\/upload$/,
+  /^\/api\/documents\/upload\/[^/]+\/chunk$/,
+  /^\/api\/zk\/documents$/
+];
 app.use((req, res, next) => {
   if (RAW_BODY_ROUTES.some((re) => re.test(req.path))) return next();
   express.json({ limit: '2mb' })(req, res, next);
@@ -48,6 +54,8 @@ app.use((req, res, next) => {
 // --- Routes ---
 app.use('/api/auth', authRoutes);
 app.use('/api/documents', documentRoutes);
+app.use('/api/zk', zkKeyRoutes);
+app.use('/api/zk', zkDocumentRoutes);
 app.use('/', healthRoutes);
 
 // --- 404 + error handling ---

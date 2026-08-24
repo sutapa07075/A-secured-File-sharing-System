@@ -57,10 +57,10 @@ Visit `http://localhost:5173`, sign in with Google, and you're on the dashboard.
 
 In Google Cloud Console → APIs & Services → Credentials:
 - Create an OAuth Client ID (Web application)
-- Authorized redirect URI: `http://localhost:5173/api/auth/google/callback` (update for production domain)
+- Authorized redirect URI: `http://localhost:4000/api/auth/google/callback` (update for production domain)
 - Copy the Client ID/Secret into `.env`
 
-## 4. Swapping in real KMS
+## 4. Swapping in real KMS (recommended before production)
 
 `src/services/kms.js` currently wraps/unwraps DEKs using a local master key from env — fine for
 getting started, but the whole point of KMS is that the master key never lives in your app's
@@ -84,6 +84,7 @@ environment. To go to production-grade:
 
 ```
 backend/
+  src/
     server.js              Express app, security headers, graceful shutdown
     db/
       schema.sql            Tables + Row-Level Security policies
@@ -129,18 +130,21 @@ Flow:
    accumulate incomplete multipart uploads.
 
 **Important limitation**: the encryption-session state (`uploadSessions.js`) lives in the memory of
-whichever Node process handled `/init`. That's fine for a single API instance. But to scale
+whichever Node process handled `/init`. That's fine for a single API instance. If you scale
 horizontally behind a load balancer, either (a) enable sticky sessions so a given upload's chunks
-always hit the same instance, or (b) move to the zero-knowledge/WebCrypto variant, where the
+always hit the same instance, or (b) move to the zero-knowledge/WebCrypto variant below, where the
 browser encrypts each chunk independently and the server just relays already-encrypted bytes — that
 approach has no server-side cipher state to keep sticky.
 
 Files under 20MB still use the original single-shot `/api/documents/upload` streaming route.
 
-## 8. Undone Parts: 
+## 8. Notes / things to decide before going live
 
 - **Zero-knowledge option**: the current design encrypts server-side (server can decrypt via KMS,
   but the database/storage alone cannot). If you want the server to *never* see plaintext even
   transiently, move the AES-GCM encrypt/decrypt into the browser via WebCrypto before upload — ask
   and I can build that variant next; it also removes the sticky-session limitation above.
-
+- **CSP `connectSrc`/origins**: tighten `helmet` CSP and `cors` origin once you know your real
+  production frontend domain.
+- Set `NODE_ENV=production` and put the API behind Nginx/a load balancer terminating TLS 1.3, per
+  the architecture doc.

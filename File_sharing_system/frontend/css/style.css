@@ -132,6 +132,11 @@ h1, h2, h3, h4 { font-family: 'Fraunces', serif; font-weight: 600; margin: 0; }
   position: fixed; inset: 0; background: rgba(0,0,0,0.55);
   display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 20;
 }
+/* The `hidden` attribute has the same CSS specificity as the class selector above,
+   and since this stylesheet loads after the browser's default one, `display: flex`
+   was winning the tie even when `hidden` was correctly set on the element. This
+   rule forces `hidden` to always win regardless of load order. */
+.modal-backdrop[hidden] { display: none; }
 .modal {
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
   max-width: 460px; width: 100%; padding: 28px;

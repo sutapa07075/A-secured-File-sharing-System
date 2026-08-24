@@ -6,8 +6,9 @@ const crypto = require('crypto');
  * This local implementation wraps/unwraps per-file DEKs using a master key
  * that lives ONLY in process env (never in Postgres, never in the repo).
  *
- * replace wrapKey/unwrapKey with real calls to AWS KMS
+ * IN PRODUCTION: replace wrapKey/unwrapKey with real calls to AWS KMS
  * (`@aws-sdk/client-kms` Encrypt/Decrypt) or HashiCorp Vault's transit engine.
+ * Nothing else in the codebase needs to change — everything else only talks
  * to this module, never to the master key directly.
  */
 

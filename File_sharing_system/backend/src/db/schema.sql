@@ -112,3 +112,64 @@ CREATE POLICY permissions_visible ON permissions
 
 -- Data retention: run periodically (see src/jobs/retention.js)
 -- Crypto-shred: deleting wrapped_dek makes the B2 ciphertext permanently unrecoverable.
+
+-- =========================================================
+-- Zero-knowledge mode (additive, separate from the server-side
+-- envelope-encryption tables above). In this mode the server never
+-- has a usable key: files are encrypted in the browser with WebCrypto
+-- before upload, and per-recipient key copies are wrapped client-side
+-- too (RSA-OAEP for named users, a fragment-only symmetric key for
+-- anonymous share links). See src/routes/zkKeys.js and zkDocuments.js.
+-- =========================================================
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS public_key BYTEA;             -- RSA-OAEP public key (JWK, as bytes)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS wrapped_private_key BYTEA;    -- private key JWK, encrypted with a passphrase-derived key
+ALTER TABLE users ADD COLUMN IF NOT EXISTS private_key_iv BYTEA;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS private_key_salt BYTEA;       -- PBKDF2 salt used to derive the wrapping key from the user's passphrase
+ALTER TABLE users ADD COLUMN IF NOT EXISTS key_created_at TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS zk_documents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  filename_ciphertext BYTEA NOT NULL,   -- filename encrypted client-side with the file key (GCM tag included in ciphertext)
+  filename_iv BYTEA NOT NULL,
+  mime_type TEXT,
+  size_bytes BIGINT,
+  b2_key TEXT NOT NULL,                 -- raw ciphertext blob; server has no key that can open it
+  file_iv BYTEA NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  deleted_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS zk_document_keys (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_id UUID REFERENCES zk_documents(id) ON DELETE CASCADE,
+  subject_type TEXT NOT NULL CHECK (subject_type IN ('user','link')),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,   -- set when subject_type = 'user' (owner or invited grantee)
+  share_code TEXT,                                        -- set when subject_type = 'link'
+  wrapped_key BYTEA NOT NULL,          -- file key wrapped for this subject: RSA-OAEP (user) or AES-GCM w/ link key (link)
+  role TEXT NOT NULL CHECK (role IN ('view','edit')) DEFAULT 'view',
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (document_id, user_id),
+  UNIQUE (share_code)
+);
+
+CREATE INDEX IF NOT EXISTS idx_zk_keys_document ON zk_document_keys(document_id);
+CREATE INDEX IF NOT EXISTS idx_zk_keys_user ON zk_document_keys(user_id);
+
+ALTER TABLE zk_documents ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS zk_doc_owner_access ON zk_documents;
+CREATE POLICY zk_doc_owner_access ON zk_documents
+  USING (owner_id = current_setting('app.current_user_id', true)::uuid);
+
+DROP POLICY IF EXISTS zk_doc_shared_access ON zk_documents;
+CREATE POLICY zk_doc_shared_access ON zk_documents
+  USING (
+    id IN (
+      SELECT document_id FROM zk_document_keys
+      WHERE user_id = current_setting('app.current_user_id', true)::uuid
+    )
+  );
+
