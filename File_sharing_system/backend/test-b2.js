@@ -1,4 +1,4 @@
-// Standalone test — bypasses the whole app, just checks if we can reach and
+// Standalone test — checks if we can reach and
 // authenticate against your Backblaze B2 bucket via the S3-compatible API.
 // Run with: node test-b2.js  (from inside the backend folder, after npm install)
 require('dotenv').config();
