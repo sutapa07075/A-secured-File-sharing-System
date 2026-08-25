@@ -110,6 +110,19 @@ CREATE POLICY permissions_visible ON permissions
     OR grantee_email = current_setting('app.current_user_email', true)
   );
 
+-- Public documents: any logged-in user can browse/download these — no
+-- per-user permission grant required, unlike restricted/link sharing.
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT FALSE;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS description_encrypted BYTEA;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS description_iv BYTEA;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS description_auth_tag BYTEA;
+
+CREATE INDEX IF NOT EXISTS idx_documents_public ON documents(is_public) WHERE is_public = TRUE;
+
+DROP POLICY IF EXISTS doc_public_access ON documents;
+CREATE POLICY doc_public_access ON documents
+  USING (is_public = TRUE);
+
 -- Data retention: run periodically (see src/jobs/retention.js)
 -- Crypto-shred: deleting wrapped_dek makes the B2 ciphertext permanently unrecoverable.
 

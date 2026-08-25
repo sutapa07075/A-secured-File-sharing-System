@@ -60,7 +60,7 @@ In Google Cloud Console → APIs & Services → Credentials:
 - Authorized redirect URI: `http://localhost:4000/api/auth/google/callback` (update for production domain)
 - Copy the Client ID/Secret into `.env`
 
-## 4. Swapping in real KMS (recommended before production)
+## 4. Swapping in real KMS (For Production we have to use AWS KMS or other service)
 
 `src/services/kms.js` currently wraps/unwraps DEKs using a local master key from env — fine for
 getting started, but the whole point of KMS is that the master key never lives in your app's
@@ -138,7 +138,16 @@ approach has no server-side cipher state to keep sticky.
 
 Files under 20MB still use the original single-shot `/api/documents/upload` streaming route.
 
-## 8. Notes / things to decide before going live
+## 8. Public folder
+
+Any document can be marked public at upload time (checkbox in the upload zone). Public documents:
+- Appear in `public.html` for **any signed-in user**, with filename, optional description, uploader, size, and date
+- Can be viewed (`reader.html`) or downloaded by any signed-in user — no per-user permission grant needed, unlike restricted/link sharing
+- Are still encrypted at rest the same as private documents; the server just skips the permission check in `resolveAccess()` when `is_public = true`
+
+If you're upgrading an existing database, re-run `npm run migrate` — `schema.sql` uses `ADD COLUMN IF NOT EXISTS` for `is_public`, `description_encrypted`, `description_iv`, `description_auth_tag`, so it's safe to re-apply.
+
+## 9. For production
 
 - **Zero-knowledge option**: the current design encrypts server-side (server can decrypt via KMS,
   but the database/storage alone cannot). If you want the server to *never* see plaintext even

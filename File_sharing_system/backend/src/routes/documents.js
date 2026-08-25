@@ -25,6 +25,8 @@ const MIN_PART_BYTES = 5 * 1024 * 1024;
 router.post('/upload', requireAuth, uploadLimiter, async (req, res) => {
   const filename = req.headers['x-filename'] ? decodeURIComponent(req.headers['x-filename']) : 'untitled';
   const mimeType = req.headers['content-type'] || 'application/octet-stream';
+  const isPublic = req.headers['x-is-public'] === 'true';
+  const description = req.headers['x-description'] ? decodeURIComponent(req.headers['x-description']) : null;
   const docId = crypto.randomUUID();
   const b2Key = `documents/${req.user.id}/${docId}`;
 
@@ -41,25 +43,29 @@ router.post('/upload', requireAuth, uploadLimiter, async (req, res) => {
 
     // Encrypt the filename too (field-level encryption) using the same per-file DEK
     const nameEnc = cryptoSvc.encryptField(filename, dek);
+    const descEnc = description ? cryptoSvc.encryptField(description, dek) : null;
 
     await withUserContext({ userId: req.user.id, email: req.user.email }, (client) =>
       client.query(
         `INSERT INTO documents
           (id, owner_id, filename_encrypted, filename_iv, filename_auth_tag,
-           mime_type, size_bytes, b2_key, wrapped_dek, dek_iv, file_iv, file_auth_tag, kms_key_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+           mime_type, size_bytes, b2_key, wrapped_dek, dek_iv, file_iv, file_auth_tag, kms_key_id,
+           is_public, description_encrypted, description_iv, description_auth_tag)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
         [
           docId, req.user.id,
           nameEnc.ciphertext, nameEnc.iv, nameEnc.authTag,
           mimeType, req.headers['content-length'] || null,
-          b2Key, wrappedDek, Buffer.alloc(0), encryptStream.iv, authTag, keyId
+          b2Key, wrappedDek, Buffer.alloc(0), encryptStream.iv, authTag, keyId,
+          isPublic, descEnc?.ciphertext || null, descEnc?.iv || null, descEnc?.authTag || null
         ]
       )
     );
 
     await logAction({
       actorId: req.user.id, actorEmail: req.user.email, action: 'upload',
-      documentId: docId, ip: req.ip, userAgent: req.headers['user-agent']
+      documentId: docId, ip: req.ip, userAgent: req.headers['user-agent'],
+      metadata: { isPublic }
     });
 
     res.status(201).json({ id: docId, filename });
@@ -122,7 +128,7 @@ router.put('/upload/:docId/chunk', requireAuth, uploadLimiter, rawChunk, async (
 
 router.post('/upload/:docId/complete', requireAuth, uploadLimiter, async (req, res) => {
   const { docId } = req.params;
-  const { filename, mimeType } = req.body;
+  const { filename, mimeType, isPublic, description } = req.body;
   const session = uploadSessions.getSession(docId);
   if (!session) return res.status(404).json({ error: 'Upload session not found or expired' });
 
@@ -140,19 +146,22 @@ router.post('/upload/:docId/complete', requireAuth, uploadLimiter, async (req, r
 
     const { wrappedDek, keyId } = cryptoSvc.wrapDek(session.dek);
     const nameEnc = cryptoSvc.encryptField(filename || 'untitled', session.dek);
+    const descEnc = description ? cryptoSvc.encryptField(description, session.dek) : null;
 
     await withUserContext({ userId: req.user.id, email: req.user.email }, (client) =>
       client.query(
         `INSERT INTO documents
           (id, owner_id, filename_encrypted, filename_iv, filename_auth_tag,
-           mime_type, size_bytes, b2_key, wrapped_dek, dek_iv, file_iv, file_auth_tag, kms_key_id, chunk_count)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+           mime_type, size_bytes, b2_key, wrapped_dek, dek_iv, file_iv, file_auth_tag, kms_key_id, chunk_count,
+           is_public, description_encrypted, description_iv, description_auth_tag)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
         [
           docId, req.user.id,
           nameEnc.ciphertext, nameEnc.iv, nameEnc.authTag,
           mimeType || 'application/octet-stream', session.bytesReceived,
           session.b2Key, wrappedDek, Buffer.alloc(0), session.iv, authTag, keyId,
-          session.parts.length
+          session.parts.length,
+          !!isPublic, descEnc?.ciphertext || null, descEnc?.iv || null, descEnc?.authTag || null
         ]
       )
     );
@@ -162,7 +171,7 @@ router.post('/upload/:docId/complete', requireAuth, uploadLimiter, async (req, r
     await logAction({
       actorId: req.user.id, actorEmail: req.user.email, action: 'upload',
       documentId: docId, ip: req.ip, userAgent: req.headers['user-agent'],
-      metadata: { chunked: true, parts: session.parts.length }
+      metadata: { chunked: true, parts: session.parts.length, isPublic: !!isPublic }
     });
 
     res.status(201).json({ id: docId, filename: filename || 'untitled' });
@@ -214,9 +223,49 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// Download: stream ciphertext out of B2, decrypt on the fly, verify GCM auth tag.
+// Public folder: any logged-in user can browse and download these — no
+// per-user permission grant required, unlike restricted/link sharing.
 // ---------------------------------------------------------------------------
-router.get('/:id/download', optionalAuth, async (req, res) => {
+router.get('/public', requireAuth, async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT d.id, d.mime_type, d.size_bytes, d.created_at,
+            d.filename_encrypted, d.filename_iv, d.filename_auth_tag,
+            d.description_encrypted, d.description_iv, d.description_auth_tag,
+            d.wrapped_dek, d.kms_key_id,
+            u.display_name AS owner_name, u.email AS owner_email
+     FROM documents d
+     JOIN users u ON u.id = d.owner_id
+     WHERE d.is_public = TRUE AND d.deleted_at IS NULL
+     ORDER BY d.created_at DESC`
+  );
+
+  const docs = rows.map((d) => {
+    try {
+      const dek = cryptoSvc.unwrapDek(d.wrapped_dek, d.kms_key_id);
+      const filename = cryptoSvc.decryptField(d.filename_encrypted, d.filename_iv, d.filename_auth_tag, dek);
+      const description = d.description_encrypted
+        ? cryptoSvc.decryptField(d.description_encrypted, d.description_iv, d.description_auth_tag, dek)
+        : null;
+      return {
+        id: d.id, filename, description, mimeType: d.mime_type, sizeBytes: d.size_bytes,
+        createdAt: d.created_at, ownerName: d.owner_name, ownerEmail: d.owner_email
+      };
+    } catch {
+      return { id: d.id, filename: '(decryption error)', mimeType: d.mime_type, createdAt: d.created_at };
+    }
+  });
+
+  res.json({ documents: docs });
+});
+
+// ---------------------------------------------------------------------------
+// Download vs. View share the same decrypt-and-stream pipeline — the only
+// difference is Content-Disposition (attachment forces a save-to-disk prompt,
+// inline lets the browser render the file directly, which is what the reader
+// needs for PDFs/images/text). Kept as one function to guarantee both paths
+// enforce identical access checks and never drift apart.
+// ---------------------------------------------------------------------------
+async function streamDocument(req, res, { disposition }) {
   const { id } = req.params;
   const { code } = req.query; // share-link code for anonymous/link access
 
@@ -229,7 +278,13 @@ router.get('/:id/download', optionalAuth, async (req, res) => {
     const decryptStream = cryptoSvc.createDecryptStream(dek, doc.file_iv, doc.file_auth_tag);
 
     res.setHeader('Content-Type', doc.mime_type || 'application/octet-stream');
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+    res.setHeader('Content-Disposition', `${disposition}; filename="${encodeURIComponent(filename)}"`);
+    if (disposition === 'inline') {
+      // Reader is same-origin-embedded via iframe/img; keep it out of caches
+      // since it's decrypted fresh per request and access can be revoked.
+      res.setHeader('Cache-Control', 'private, no-store');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+    }
 
     const cipherStream = storage.getObjectStream(doc.b2_key);
     cipherStream.on('error', (err) => {
@@ -243,16 +298,22 @@ router.get('/:id/download', optionalAuth, async (req, res) => {
     });
 
     await logAction({
-      actorId: req.user?.id, actorEmail: req.user?.email, action: 'download',
+      actorId: req.user?.id, actorEmail: req.user?.email, action: disposition === 'inline' ? 'view' : 'download',
       documentId: id, ip: req.ip, userAgent: req.headers['user-agent']
     });
 
     cipherStream.pipe(decryptStream).pipe(res);
   } catch (err) {
-    console.error('Download failed', err);
-    res.status(500).json({ error: 'Download failed' });
+    console.error(`${disposition === 'inline' ? 'View' : 'Download'} failed`, err);
+    res.status(500).json({ error: 'Could not open document' });
   }
-});
+}
+
+router.get('/:id/download', optionalAuth, (req, res) => streamDocument(req, res, { disposition: 'attachment' }));
+
+// Same access rules as download, but renders in-browser (PDF/image/text)
+// instead of triggering a save dialog — this is what the reader page uses.
+router.get('/:id/view', optionalAuth, (req, res) => streamDocument(req, res, { disposition: 'inline' }));
 
 // ---------------------------------------------------------------------------
 // Sharing: create a permission grant (link, restricted-by-email, or revoke)
@@ -270,13 +331,24 @@ router.post('/:id/share', requireAuth, async (req, res) => {
   );
   if (owns.rows.length === 0) return res.status(403).json({ error: 'Only the owner can share this document' });
 
+  if (scope === 'restricted') {
+    const grantee = await pool.query(`SELECT id FROM users WHERE email = $1`, [granteeEmail]);
+    if (grantee.rows.length === 0) {
+      return res.status(404).json({
+        error: 'No account found for that email. They need to sign in with Google at least once before you can share with them.'
+      });
+    }
+  }
+
   const shareCode = scope === 'link' ? crypto.randomBytes(8).toString('base64url') : null;
   const expiresAt = expiresInHours ? new Date(Date.now() + expiresInHours * 3600 * 1000) : null;
 
-  const result = await pool.query(
-    `INSERT INTO permissions (document_id, scope, grantee_email, role, share_code, expires_at, created_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id, share_code`,
-    [id, scope, scope === 'restricted' ? granteeEmail : null, role, shareCode, expiresAt, req.user.id]
+  const result = await withUserContext({ userId: req.user.id, email: req.user.email }, (client) =>
+    client.query(
+      `INSERT INTO permissions (document_id, scope, grantee_email, role, share_code, expires_at, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id, share_code`,
+      [id, scope, scope === 'restricted' ? granteeEmail : null, role, shareCode, expiresAt, req.user.id]
+    )
   );
 
   await logAction({
@@ -285,13 +357,53 @@ router.post('/:id/share', requireAuth, async (req, res) => {
     metadata: { scope, granteeEmail, role }
   });
 
-  const shareUrl = shareCode ? `${process.env.SHARE_LINK_BASE_URL}/${shareCode}` : null;
+  // The share page needs BOTH the document id and the code — a code alone
+  // can't be looked up (there could be many documents), which was the
+  // original bug causing every share link to 404.
+  const shareUrl = shareCode ? `${process.env.SHARE_LINK_BASE_URL}/${id}?code=${shareCode}` : null;
   res.status(201).json({ permissionId: result.rows[0].id, shareUrl });
+});
+
+// Look up whether an email belongs to a registered user, so the sharing UI
+// can confirm "yes, this is the person you mean" before actually sharing.
+router.get('/users/lookup', requireAuth, async (req, res) => {
+  const { email } = req.query;
+  if (!email) return res.status(400).json({ error: 'email query param required' });
+
+  const { rows } = await pool.query(
+    `SELECT id, email, display_name, avatar_url FROM users WHERE email = $1`,
+    [email]
+  );
+  if (rows.length === 0) return res.status(404).json({ found: false });
+
+  const u = rows[0];
+  res.json({ found: true, userId: u.id, email: u.email, displayName: u.display_name, avatarUrl: u.avatar_url });
+});
+
+// Metadata for a shared document (owner, invited grantee, or valid link code) —
+// lets the share landing page show the filename before committing to a download.
+router.get('/:id/meta', optionalAuth, async (req, res) => {
+  const { id } = req.params;
+  const { code } = req.query;
+
+  const doc = await resolveAccess({ docId: id, user: req.user, shareCode: code });
+  if (!doc) return res.status(403).json({ error: 'Access denied or link expired' });
+
+  try {
+    const dek = cryptoSvc.unwrapDek(doc.wrapped_dek, doc.kms_key_id);
+    const filename = cryptoSvc.decryptField(doc.filename_encrypted, doc.filename_iv, doc.filename_auth_tag, dek);
+    res.json({ filename, mimeType: doc.mime_type, sizeBytes: doc.size_bytes });
+  } catch (err) {
+    console.error('Meta decrypt failed', err);
+    res.status(500).json({ error: 'Could not read document metadata' });
+  }
 });
 
 router.delete('/:id/share/:permissionId', requireAuth, async (req, res) => {
   const { id, permissionId } = req.params;
-  const owns = await pool.query(`SELECT id FROM documents WHERE id = $1 AND owner_id = $2`, [id, req.user.id]);
+  const owns = await withUserContext({ userId: req.user.id, email: req.user.email }, (client) =>
+    client.query(`SELECT id FROM documents WHERE id = $1 AND owner_id = $2`, [id, req.user.id])
+  );
   if (owns.rows.length === 0) return res.status(403).json({ error: 'Only the owner can revoke sharing' });
 
   await pool.query(`DELETE FROM permissions WHERE id = $1 AND document_id = $2`, [permissionId, id]);
@@ -308,7 +420,9 @@ router.delete('/:id/share/:permissionId', requireAuth, async (req, res) => {
 // ---------------------------------------------------------------------------
 router.delete('/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
-  const doc = await pool.query(`SELECT b2_key FROM documents WHERE id = $1 AND owner_id = $2`, [id, req.user.id]);
+  const doc = await withUserContext({ userId: req.user.id, email: req.user.email }, (client) =>
+    client.query(`SELECT b2_key FROM documents WHERE id = $1 AND owner_id = $2`, [id, req.user.id])
+  );
   if (doc.rows.length === 0) return res.status(403).json({ error: 'Only the owner can delete this document' });
 
   await pool.query(
@@ -338,6 +452,9 @@ async function resolveAccess({ docId, user, shareCode }) {
   if (!doc) return null;
 
   if (user && doc.owner_id === user.id) return doc;
+
+  // Public documents are open to any logged-in user — no permission grant needed.
+  if (user && doc.is_public) return doc;
 
   if (shareCode) {
     const perm = await pool.query(

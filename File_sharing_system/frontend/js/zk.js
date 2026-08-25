@@ -1,3 +1,12 @@
+// Defensive reset: same bfcache guard as app.js — don't let a stale modal or
+// progress bar reappear from a cached DOM snapshot.
+window.addEventListener('pageshow', () => {
+  const modal = document.getElementById('shareModal');
+  if (modal) modal.hidden = true;
+  const progress = document.getElementById('uploadProgress');
+  if (progress) progress.hidden = true;
+});
+
 const ZK_API_BASE = window.location.origin.replace(/:\d+$/, ':4000');
 
 async function zkApi(path, opts = {}) {

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vault — Reader</title>
+<link rel="stylesheet" href="css/style.css" />
+<style>
+  body { background: var(--ink); }
+  .reader-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; border-bottom: 1px solid var(--line);
+  }
+  .reader-filename { font-family: 'Fraunces', serif; font-size: 15px; color: var(--text); max-width: 60vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .reader-body { height: calc(100vh - 57px); display: flex; align-items: center; justify-content: center; }
+  .reader-body iframe { width: 100%; height: 100%; border: none; background: #fff; }
+  .reader-body img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .reader-body pre {
+    width: 90%; height: 90%; overflow: auto; margin: 0; padding: 24px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    color: var(--text); font-family: 'SFMono-Regular', Consolas, monospace; font-size: 13px; line-height: 1.6;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .reader-fallback { text-align: center; color: var(--text-dim); }
+  .reader-fallback p { margin-bottom: 16px; }
+</style>
+</head>
+<body>
+  <header class="reader-topbar">
+    <div class="row" style="gap:12px; align-items:center;">
+      <button id="backBtn" class="btn-ghost small">&#8592; Back</button>
+      <span class="reader-filename" id="readerFilename">Loading…</span>
+    </div>
+    <a id="downloadLink" class="btn-primary small" style="text-decoration:none;">Download</a>
+  </header>
+  <main class="reader-body" id="readerBody">
+    <p class="reader-fallback">Loading document…</p>
+  </main>
+
+  <script>
+    const API_BASE = window.location.origin.replace(/:\d+$/, ':4000');
+
+    function qsParam(name) {
+      return new URLSearchParams(window.location.search).get(name);
+    }
+
+    async function apiFetch(path, opts = {}) {
+      const res = await fetch(`${API_BASE}${path}`, { credentials: 'include', ...opts });
+      if (res.status === 401) {
+        const refreshed = await fetch(`${API_BASE}/api/auth/refresh`, { method: 'POST', credentials: 'include' });
+        if (refreshed.ok) return apiFetch(path, opts);
+      }
+      return res;
+    }
+
+    async function run() {
+      const docId = qsParam('doc');
+      const code = qsParam('code'); // present when opened from a share link
+      const backTo = qsParam('from') || 'dashboard.html';
+      document.getElementById('backBtn').addEventListener('click', () => { window.location.href = backTo; });
+
+      if (!docId) {
+        document.getElementById('readerFilename').textContent = 'No document specified';
+        return;
+      }
+
+      const codeQuery = code ? `?code=${encodeURIComponent(code)}` : '';
+      const metaRes = await apiFetch(`/api/documents/${docId}/meta${codeQuery}`);
+      if (!metaRes.ok) {
+        document.getElementById('readerFilename').textContent = 'Could not open document';
+        document.getElementById('readerBody').innerHTML = '<p class="reader-fallback">Access denied, or the link has expired.</p>';
+        return;
+      }
+      const meta = await metaRes.json();
+      document.getElementById('readerFilename').textContent = meta.filename;
+
+      const viewUrl = `${API_BASE}/api/documents/${docId}/view${codeQuery}`;
+      const downloadUrl = `${API_BASE}/api/documents/${docId}/download${codeQuery}`;
+      document.getElementById('downloadLink').href = downloadUrl;
+
+      const body = document.getElementById('readerBody');
+      const mime = meta.mimeType || '';
+
+      if (mime === 'application/pdf') {
+        body.innerHTML = `<iframe src="${viewUrl}"></iframe>`;
+      } else if (mime.startsWith('image/')) {
+        body.innerHTML = `<img src="${viewUrl}" alt="${meta.filename}" />`;
+      } else if (mime.startsWith('text/') || mime === 'application/json') {
+        try {
+          const textRes = await apiFetch(`/api/documents/${docId}/view${codeQuery}`);
+          const text = await textRes.text();
+          const pre = document.createElement('pre');
+          pre.textContent = text;
+          body.innerHTML = '';
+          body.appendChild(pre);
+        } catch {
+          body.innerHTML = '<p class="reader-fallback">Could not load text preview.</p>';
+        }
+      } else {
+        body.innerHTML = `
+          <div class="reader-fallback">
+            <p>Preview isn't available for this file type (${mime || 'unknown'}).</p>
+            <a class="btn-primary" style="text-decoration:none;" href="${downloadUrl}">Download instead</a>
+          </div>`;
+      }
+    }
+    run();
+  </script>
+</body>
+</html>

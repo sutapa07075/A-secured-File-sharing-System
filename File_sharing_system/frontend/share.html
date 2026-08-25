@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vault — Shared document</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="auth-screen">
+    <div class="auth-card" style="max-width:480px;">
+      <div class="brand">
+        <span class="brand-mark">&#9633;</span>
+        <span class="brand-name">Vault</span>
+      </div>
+      <h1 id="statusTitle">Checking link…</h1>
+      <p class="sub" id="statusSub">One moment.</p>
+      <div id="fileCard" hidden style="margin-top:20px;">
+        <div class="doc-row">
+          <span class="doc-icon">&#128274;</span>
+          <div class="doc-meta">
+            <div class="doc-name" id="fileName"></div>
+            <div class="doc-sub" id="fileMeta"></div>
+          </div>
+        </div>
+        <a id="downloadBtn" class="btn-primary" style="margin-top:16px; width:100%; display:block; text-align:center; text-decoration:none; box-sizing:border-box;">Download</a>
+        <a id="viewBtn" class="btn-ghost" style="margin-top:10px; width:100%; display:block; text-align:center; text-decoration:none; box-sizing:border-box;">View in browser</a>
+      </div>
+    </div>
+  </main>
+  <script>
+    const API_BASE = window.location.origin.replace(/:\d+$/, ':4000');
+
+    async function run() {
+      const params = new URLSearchParams(window.location.search);
+      // Support both /share.html?doc=<id>&code=<code> and /share.html/<id>?code=<code>
+      // (the latter from a server that constructs the path directly).
+      let docId = params.get('doc');
+      const code = params.get('code');
+      if (!docId) {
+        const pathParts = window.location.pathname.split('/').filter(Boolean);
+        docId = pathParts[pathParts.length - 1] !== 'share.html' ? pathParts[pathParts.length - 1] : null;
+      }
+
+      const statusTitle = document.getElementById('statusTitle');
+      const statusSub = document.getElementById('statusSub');
+
+      if (!docId || !code) {
+        statusTitle.textContent = 'Invalid link';
+        statusSub.textContent = 'This share link is missing required parameters.';
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/documents/${docId}/meta?code=${encodeURIComponent(code)}`, {
+          credentials: 'include'
+        });
+        if (!res.ok) throw new Error((await res.json()).error || 'Link expired or invalid');
+        const info = await res.json();
+
+        statusTitle.textContent = 'Ready to download';
+        statusSub.textContent = 'This document was shared with you.';
+        document.getElementById('fileName').textContent = info.filename;
+        document.getElementById('fileMeta').textContent = info.mimeType || '';
+        document.getElementById('downloadBtn').href = `${API_BASE}/api/documents/${docId}/download?code=${encodeURIComponent(code)}`;
+        document.getElementById('viewBtn').href = `reader.html?doc=${docId}&code=${encodeURIComponent(code)}&from=${encodeURIComponent(window.location.href)}`;
+        document.getElementById('fileCard').hidden = false;
+      } catch (err) {
+        statusTitle.textContent = 'Could not open document';
+        statusSub.textContent = err.message || 'The link may have expired or been revoked.';
+      }
+    }
+    run();
+  </script>
+</body>
+</html>

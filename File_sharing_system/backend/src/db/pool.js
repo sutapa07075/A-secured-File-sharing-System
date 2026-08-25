@@ -22,8 +22,11 @@ async function withUserContext({ userId, email }, fn) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [userId || '']);
-    await client.query(`SELECT set_config('app.current_user_email', $1, true)`, [email || '']);
+    // Pass NULL (not '') when absent — casting an empty string to ::uuid in the
+    // RLS policies throws a Postgres error, whereas NULL just makes the
+    // owner/grantee comparisons evaluate to false as intended for anonymous access.
+    await client.query(`SELECT set_config('app.current_user_id', $1, true)`, [userId || null]);
+    await client.query(`SELECT set_config('app.current_user_email', $1, true)`, [email || null]);
     const result = await fn(client);
     await client.query('COMMIT');
     return result;

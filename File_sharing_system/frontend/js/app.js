@@ -1,3 +1,13 @@
+// Defensive reset: force any leftover UI state closed on every load, including
+// bfcache restores (e.g. browser back/forward), which can otherwise resurrect
+// a modal or progress bar that was left open in a previous DOM snapshot.
+window.addEventListener('pageshow', () => {
+  const modal = document.getElementById('shareModal');
+  if (modal) modal.hidden = true;
+  const progress = document.getElementById('uploadProgress');
+  if (progress) progress.hidden = true;
+});
+
 const API_BASE = window.location.origin.replace(/:\d+$/, ':4000'); // adjust if API is on a different host
 
 async function api(path, opts = {}) {
@@ -58,11 +68,15 @@ if (document.getElementById('docList')) {
         <div class="doc-sub">${formatBytes(doc.sizeBytes)} · ${formatDate(doc.createdAt)}</div>
       </div>
       <div class="doc-actions">
+        <button class="btn-ghost small" data-action="view">View</button>
         <button class="btn-ghost small" data-action="download">Download</button>
         ${doc.isOwner ? '<button class="btn-ghost small" data-action="share">Share</button>' : ''}
         ${doc.isOwner ? '<button class="btn-ghost small" data-action="delete">Delete</button>' : ''}
       </div>
     `;
+    row.querySelector('[data-action="view"]').addEventListener('click', () => {
+      window.open(`reader.html?doc=${doc.id}`, '_blank');
+    });
     row.querySelector('[data-action="download"]').addEventListener('click', () => {
       window.location.href = `${API_BASE}/api/documents/${doc.id}/download`;
     });
@@ -95,27 +109,34 @@ if (document.getElementById('docList')) {
   }
 
   async function uploadFile(file) {
+    const isPublic = document.getElementById('isPublicCheckbox').checked;
+    const description = document.getElementById('descriptionInput').value.trim();
     progressRow.hidden = false;
     setProgress(0);
     try {
       if (file.size >= CHUNK_THRESHOLD_BYTES) {
-        await uploadFileChunked(file);
+        await uploadFileChunked(file, { isPublic, description });
       } else {
-        await uploadFileSingleShot(file);
+        await uploadFileSingleShot(file, { isPublic, description });
       }
     } finally {
       progressRow.hidden = true;
     }
+    document.getElementById('isPublicCheckbox').checked = false;
+    document.getElementById('descriptionInput').hidden = true;
+    document.getElementById('descriptionInput').value = '';
     loadDocuments();
   }
 
-  function uploadFileSingleShot(file) {
+  function uploadFileSingleShot(file, { isPublic, description }) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', `${API_BASE}/api/documents/upload`);
       xhr.withCredentials = true;
       xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
       xhr.setRequestHeader('X-Filename', encodeURIComponent(file.name));
+      xhr.setRequestHeader('X-Is-Public', isPublic ? 'true' : 'false');
+      if (description) xhr.setRequestHeader('X-Description', encodeURIComponent(description));
       xhr.upload.onprogress = (e) => {
         if (!e.lengthComputable) return;
         setProgress(Math.round((e.loaded / e.total) * 100));
@@ -126,7 +147,7 @@ if (document.getElementById('docList')) {
     });
   }
 
-  async function uploadFileChunked(file) {
+  async function uploadFileChunked(file, { isPublic, description }) {
     const initRes = await api('/api/documents/upload/init', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -156,7 +177,7 @@ if (document.getElementById('docList')) {
       const completeRes = await api(`/api/documents/upload/${docId}/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: file.name, mimeType: file.type || 'application/octet-stream' })
+        body: JSON.stringify({ filename: file.name, mimeType: file.type || 'application/octet-stream', isPublic, description: description || null })
       });
       if (!completeRes.ok) throw new Error('Could not finalize upload');
     } catch (err) {
@@ -164,6 +185,10 @@ if (document.getElementById('docList')) {
       throw err;
     }
   }
+
+  document.getElementById('isPublicCheckbox').addEventListener('change', (e) => {
+    document.getElementById('descriptionInput').hidden = !e.target.checked;
+  });
 
   browseBtn.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', () => {
@@ -188,11 +213,17 @@ if (document.getElementById('docList')) {
 
   // ---- Share modal ----
   const shareModal = document.getElementById('shareModal');
+  let confirmedGranteeEmail = null;
+
   function openShareModal(doc) {
     activeShareDocId = doc.id;
     document.getElementById('shareDocName').textContent = doc.filename;
     document.getElementById('linkResult').hidden = true;
     document.getElementById('granteeEmail').value = '';
+    document.getElementById('granteeFound').hidden = true;
+    document.getElementById('granteeNotFound').hidden = true;
+    document.getElementById('inviteBtn').disabled = true;
+    confirmedGranteeEmail = null;
     shareModal.hidden = false;
   }
   document.getElementById('closeShareModal').addEventListener('click', () => (shareModal.hidden = true));
@@ -206,6 +237,7 @@ if (document.getElementById('docList')) {
     });
     if (!res.ok) return alert('Could not create link');
     const { shareUrl } = await res.json();
+    // shareUrl is built server-side and already includes the document id + code.
     document.getElementById('linkResultInput').value = shareUrl;
     document.getElementById('linkResult').hidden = false;
   });
@@ -215,18 +247,64 @@ if (document.getElementById('docList')) {
     document.execCommand('copy');
   });
 
+  // Verify the email belongs to a real registered user before allowing an
+  // invite, and show exactly who will be invited so there's no ambiguity.
+  document.getElementById('checkEmailBtn').addEventListener('click', async () => {
+    const email = document.getElementById('granteeEmail').value.trim();
+    const foundBox = document.getElementById('granteeFound');
+    const notFoundBox = document.getElementById('granteeNotFound');
+    const inviteBtn = document.getElementById('inviteBtn');
+    foundBox.hidden = true;
+    notFoundBox.hidden = true;
+    inviteBtn.disabled = true;
+    confirmedGranteeEmail = null;
+    if (!email) return;
+
+    const res = await api(`/api/documents/users/lookup?email=${encodeURIComponent(email)}`);
+    if (res.status === 404) {
+      notFoundBox.textContent = 'No Vault account found for that email. They need to sign in with Google once before you can share with them.';
+      notFoundBox.hidden = false;
+      return;
+    }
+    if (!res.ok) {
+      notFoundBox.textContent = 'Could not check that email right now — try again.';
+      notFoundBox.hidden = false;
+      return;
+    }
+    const { email: matchedEmail, displayName, avatarUrl } = await res.json();
+    document.getElementById('granteeAvatar').src = avatarUrl || '';
+    document.getElementById('granteeName').textContent = `${displayName || matchedEmail} (${matchedEmail})`;
+    foundBox.hidden = false;
+    confirmedGranteeEmail = matchedEmail;
+    inviteBtn.disabled = false;
+  });
+
+  document.getElementById('granteeEmail').addEventListener('input', () => {
+    // Any edit to the email invalidates a previous confirmation, so you can
+    // never invite someone you didn't actually verify.
+    confirmedGranteeEmail = null;
+    document.getElementById('inviteBtn').disabled = true;
+    document.getElementById('granteeFound').hidden = true;
+    document.getElementById('granteeNotFound').hidden = true;
+  });
+
   document.getElementById('inviteBtn').addEventListener('click', async () => {
-    const granteeEmail = document.getElementById('granteeEmail').value.trim();
+    if (!confirmedGranteeEmail) return;
     const role = document.getElementById('granteeRole').value;
-    if (!granteeEmail) return;
     const res = await api(`/api/documents/${activeShareDocId}/share`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scope: 'restricted', granteeEmail, role })
+      body: JSON.stringify({ scope: 'restricted', granteeEmail: confirmedGranteeEmail, role })
     });
-    if (!res.ok) return alert('Could not invite that person');
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      return alert(body.error || 'Could not share with that person');
+    }
+    alert(`Shared with ${confirmedGranteeEmail}`);
     document.getElementById('granteeEmail').value = '';
-    alert(`Invited ${granteeEmail}`);
+    document.getElementById('granteeFound').hidden = true;
+    document.getElementById('inviteBtn').disabled = true;
+    confirmedGranteeEmail = null;
   });
 
   loadDocuments();
