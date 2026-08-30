@@ -123,6 +123,38 @@ DROP POLICY IF EXISTS doc_public_access ON documents;
 CREATE POLICY doc_public_access ON documents
   USING (is_public = TRUE);
 
+-- Public folder: search, categories, ratings
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS category TEXT;
+
+-- Plaintext copies exist ONLY for public documents (private docs never get
+-- these populated) — full-text search needs plaintext to index, and since the
+-- document is already public, this doesn't weaken confidentiality further.
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS filename_plain TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS description_plain TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS extracted_text TEXT; -- crawled content (PDF/text files)
+
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS search_vector tsvector
+  GENERATED ALWAYS AS (
+    setweight(to_tsvector('english', coalesce(filename_plain, '')), 'A') ||
+    setweight(to_tsvector('english', coalesce(category, '')), 'B') ||
+    setweight(to_tsvector('english', coalesce(description_plain, '')), 'C') ||
+    setweight(to_tsvector('english', coalesce(extracted_text, '')), 'D')
+  ) STORED;
+
+CREATE INDEX IF NOT EXISTS idx_documents_search ON documents USING GIN(search_vector);
+CREATE INDEX IF NOT EXISTS idx_documents_category ON documents(category) WHERE is_public = TRUE;
+
+CREATE TABLE IF NOT EXISTS document_ratings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  rating SMALLINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (document_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_ratings_document ON document_ratings(document_id);
+
 -- Data retention: run periodically (see src/jobs/retention.js)
 -- Crypto-shred: deleting wrapped_dek makes the B2 ciphertext permanently unrecoverable.
 

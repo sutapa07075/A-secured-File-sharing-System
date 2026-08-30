@@ -25,9 +25,18 @@ app.use(helmet({
       connectSrc: ["'self'", process.env.FRONTEND_ORIGIN],
       imgSrc: ["'self'", 'data:', 'https://*.googleusercontent.com'],
       scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"]
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      // Allow the frontend (different port = different origin to the browser)
+      // to embed our /view responses in an <iframe> for the PDF reader.
+      frameAncestors: ["'self'", process.env.FRONTEND_ORIGIN]
     }
   },
+  // Helmet's default X-Frame-Options: SAMEORIGIN would block that same iframe
+  // regardless of the CSP frame-ancestors rule above (X-Frame-Options doesn't
+  // understand "same site, different port" the way frame-ancestors does) — so
+  // we turn it off here and rely on the CSP directive instead, which is the
+  // modern, more precise replacement for the same protection.
+  frameguard: false,
   crossOriginResourcePolicy: { policy: 'same-site' }
 }));
 app.use(helmet.hsts({ maxAge: 31536000, includeSubDomains: true, preload: true }));

@@ -198,11 +198,20 @@ router.post('/upload/:docId/abort', requireAuth, async (req, res) => {
 // List documents the user owns or has been granted access to (RLS enforces this)
 // ---------------------------------------------------------------------------
 router.get('/', requireAuth, async (req, res) => {
+  // Explicit WHERE filter — do not rely on RLS alone here. Postgres RLS does
+  // not restrict the table-owning role by default, and since the app connects
+  // as that owning role, an unfiltered query would return every document in
+  // the database regardless of policies. This filter is the actual guarantee.
   const rows = await withUserContext({ userId: req.user.id, email: req.user.email }, (client) =>
     client.query(
-      `SELECT id, mime_type, size_bytes, created_at,
-              filename_encrypted, filename_iv, filename_auth_tag, wrapped_dek, dek_iv, file_iv, file_auth_tag, kms_key_id, owner_id
-       FROM documents WHERE deleted_at IS NULL ORDER BY created_at DESC`
+      `SELECT DISTINCT d.id, d.mime_type, d.size_bytes, d.created_at,
+              d.filename_encrypted, d.filename_iv, d.filename_auth_tag, d.wrapped_dek, d.dek_iv, d.file_iv, d.file_auth_tag, d.kms_key_id, d.owner_id
+       FROM documents d
+       LEFT JOIN permissions p ON p.document_id = d.id AND p.scope = 'restricted' AND p.grantee_email = $1
+       WHERE d.deleted_at IS NULL
+         AND (d.owner_id = $2 OR p.id IS NOT NULL)
+       ORDER BY d.created_at DESC`,
+      [req.user.email, req.user.id]
     )
   );
 
