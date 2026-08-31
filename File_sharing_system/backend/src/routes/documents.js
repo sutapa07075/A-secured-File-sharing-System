@@ -195,6 +195,45 @@ router.post('/upload/:docId/abort', requireAuth, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// Toggle public/private after the fact — no need to decide at upload time.
+// Owner only. Re-encrypts the optional description with the document's
+// existing per-file key, same as at upload.
+// ---------------------------------------------------------------------------
+router.patch('/:id/visibility', requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const { isPublic, description } = req.body;
+  if (typeof isPublic !== 'boolean') return res.status(400).json({ error: 'isPublic (boolean) is required' });
+
+  const doc = await withUserContext({ userId: req.user.id, email: req.user.email }, (client) =>
+    client.query(`SELECT wrapped_dek, kms_key_id FROM documents WHERE id = $1 AND owner_id = $2`, [id, req.user.id])
+  );
+  if (doc.rows.length === 0) return res.status(403).json({ error: 'Only the owner can change visibility' });
+
+  try {
+    if (typeof description === 'string' && description.trim()) {
+      const dek = cryptoSvc.unwrapDek(doc.rows[0].wrapped_dek, doc.rows[0].kms_key_id);
+      const descEnc = cryptoSvc.encryptField(description.trim(), dek);
+      await pool.query(
+        `UPDATE documents SET is_public = $1, description_encrypted = $2, description_iv = $3, description_auth_tag = $4 WHERE id = $5`,
+        [isPublic, descEnc.ciphertext, descEnc.iv, descEnc.authTag, id]
+      );
+    } else {
+      await pool.query(`UPDATE documents SET is_public = $1 WHERE id = $2`, [isPublic, id]);
+    }
+
+    await logAction({
+      actorId: req.user.id, actorEmail: req.user.email, action: isPublic ? 'make_public' : 'make_private',
+      documentId: id, ip: req.ip, userAgent: req.headers['user-agent']
+    });
+
+    res.json({ ok: true, isPublic });
+  } catch (err) {
+    console.error('Visibility update failed', err);
+    res.status(500).json({ error: 'Could not update visibility' });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // List documents the user owns or has been granted access to (RLS enforces this)
 // ---------------------------------------------------------------------------
 router.get('/', requireAuth, async (req, res) => {
@@ -204,7 +243,7 @@ router.get('/', requireAuth, async (req, res) => {
   // the database regardless of policies. This filter is the actual guarantee.
   const rows = await withUserContext({ userId: req.user.id, email: req.user.email }, (client) =>
     client.query(
-      `SELECT DISTINCT d.id, d.mime_type, d.size_bytes, d.created_at,
+      `SELECT DISTINCT d.id, d.mime_type, d.size_bytes, d.created_at, d.is_public,
               d.filename_encrypted, d.filename_iv, d.filename_auth_tag, d.wrapped_dek, d.dek_iv, d.file_iv, d.file_auth_tag, d.kms_key_id, d.owner_id
        FROM documents d
        LEFT JOIN permissions p ON p.document_id = d.id AND p.scope = 'restricted' AND p.grantee_email = $1
@@ -221,7 +260,7 @@ router.get('/', requireAuth, async (req, res) => {
       const filename = cryptoSvc.decryptField(d.filename_encrypted, d.filename_iv, d.filename_auth_tag, dek);
       return {
         id: d.id, filename, mimeType: d.mime_type, sizeBytes: d.size_bytes,
-        createdAt: d.created_at, isOwner: d.owner_id === req.user.id
+        createdAt: d.created_at, isOwner: d.owner_id === req.user.id, isPublic: d.is_public
       };
     } catch {
       return { id: d.id, filename: '(decryption error)', mimeType: d.mime_type, createdAt: d.created_at };

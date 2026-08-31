@@ -24,7 +24,7 @@ Frontend: vanilla HTML/CSS/JS (no build step)
 - A NeonDB (or any Postgres) database
 - A Redis instance (Upstash, Redis Cloud, or local)
 - A Backblaze B2 bucket with an Application Key (S3-compatible endpoint)
-- A Google Cloud OAuth 2.0 Client ID (Web application type)
+- A Google Cloud OAuth 2.0 Client ID (Web application type) — optional if you only want email/password login
 
 ## 2. Setup
 
@@ -42,6 +42,10 @@ openssl rand -hex 64   # -> JWT_REFRESH_SECRET
 npm run migrate    # applies schema.sql (tables + RLS policies) to your database
 npm run dev         # starts the API on :4000
 ```
+
+If you're upgrading an existing install: run `npm install` again (adds `bcryptjs` for
+email/password auth) and re-run `npm run migrate` (adds the `password_hash` column and makes
+`google_sub` nullable, since email/password accounts don't have one).
 
 Serve the frontend as static files. `npx serve` picks up the included `frontend/serve.json`
 automatically, which disables "clean URL" rewriting — without it, `serve` silently redirects

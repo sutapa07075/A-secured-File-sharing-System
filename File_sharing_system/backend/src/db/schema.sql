@@ -5,13 +5,18 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  google_sub TEXT UNIQUE NOT NULL,
+  google_sub TEXT UNIQUE,             -- nullable: not every account signs in with Google
   email TEXT UNIQUE NOT NULL,
+  password_hash TEXT,                 -- nullable: not every account uses a password (Google-only accounts have none)
   display_name TEXT,
   avatar_url TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
   last_login_at TIMESTAMPTZ
 );
+
+-- Upgrade path for databases created before email/password auth existed.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+ALTER TABLE users ALTER COLUMN google_sub DROP NOT NULL;
 
 CREATE TABLE IF NOT EXISTS refresh_tokens (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

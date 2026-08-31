@@ -4,6 +4,8 @@
 window.addEventListener('pageshow', () => {
   const modal = document.getElementById('shareModal');
   if (modal) modal.hidden = true;
+  const vmodal = document.getElementById('visibilityModal');
+  if (vmodal) vmodal.hidden = true;
 });
 
 if (window.pdfjsLib) {
@@ -44,18 +46,64 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+// Populates the sidebar's user widget (avatar/name/email), if that markup is
+// present on the page. Shared by dashboard.html and public.html.
+async function loadSidebarUser() {
+  const widget = document.getElementById('sidebarUser');
+  if (!widget) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' });
+    if (!res.ok) return;
+    const user = await res.json();
+    const name = user.displayName || user.email.split('@')[0];
+    document.getElementById('sidebarUserName').textContent = name;
+    document.getElementById('sidebarUserEmail').textContent = user.email;
+    const avatarEl = document.getElementById('sidebarUserAvatar');
+    if (user.avatarUrl) {
+      avatarEl.innerHTML = `<img src="${user.avatarUrl}" alt="" />`;
+    } else {
+      avatarEl.textContent = name.charAt(0).toUpperCase();
+    }
+    widget.hidden = false;
+  } catch {
+    // sidebar just won't show user info — not worth surfacing an error for
+  }
+}
+loadSidebarUser();
+
+// In-app confirmation dialog — replaces window.confirm(), which shows a
+// browser-chrome popup ("localhost:5173 says...") that looks out of place.
+// Returns a Promise<boolean>, same calling convention as confirm().
+function confirmDialog(message, { confirmText = 'Delete', cancelText = 'Cancel', danger = true } = {}) {
+  return new Promise((resolve) => {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `
+      <div class="modal" style="max-width:380px;">
+        <div class="modal-body" style="gap:18px;">
+          <p style="margin:0; font-size:14px; line-height:1.5;">${escapeHtml(message)}</p>
+          <div class="row" style="justify-content:flex-end; gap:8px;">
+            <button class="btn-ghost small" data-role="cancel">${escapeHtml(cancelText)}</button>
+            <button class="btn-primary small" data-role="confirm" style="${danger ? 'background:var(--warn);border-color:var(--warn);color:#1a0f0a;' : ''}">${escapeHtml(confirmText)}</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(backdrop);
+    backdrop.querySelector('[data-role="cancel"]').addEventListener('click', () => { backdrop.remove(); resolve(false); });
+    backdrop.querySelector('[data-role="confirm"]').addEventListener('click', () => { backdrop.remove(); resolve(true); });
+  });
+}
+
 // ---------------- Dashboard logic ----------------
 if (document.getElementById('docList')) {
-  const dropZone = document.getElementById('dropZone');
   const fileInput = document.getElementById('fileInput');
-  const browseBtn = document.getElementById('browseBtn');
   const docList = document.getElementById('docList');
   const emptyState = document.getElementById('emptyState');
 
   let activeShareDocId = null;
 
   async function loadDocuments() {
-    const res = await api('/api/documents');
+    const res = await api('/api/documents', { cache: 'no-store' });
     if (!res.ok) return;
     const { documents } = await res.json();
     docList.innerHTML = '';
@@ -68,6 +116,7 @@ if (document.getElementById('docList')) {
     card.className = 'doc-card';
     card.innerHTML = `
       <div class="doc-thumb" data-action="view">
+        ${doc.isPublic ? '<span class="doc-public-badge">Public</span>' : ''}
         <span class="doc-thumb-icon">${thumbFallbackIcon(doc.mimeType)}</span>
       </div>
       <div class="doc-card-body">
@@ -77,6 +126,7 @@ if (document.getElementById('docList')) {
       <div class="doc-card-actions">
         <button data-action="download">Download</button>
         ${doc.isOwner ? '<button data-action="share">Share</button>' : ''}
+        ${doc.isOwner ? `<button data-action="visibility">${doc.isPublic ? 'Make private' : 'Make public'}</button>` : ''}
         ${doc.isOwner ? '<button data-action="delete">Delete</button>' : ''}
       </div>
     `;
@@ -88,12 +138,26 @@ if (document.getElementById('docList')) {
     });
     const shareBtn = card.querySelector('[data-action="share"]');
     if (shareBtn) shareBtn.addEventListener('click', () => openShareModal(doc));
+    const visBtn = card.querySelector('[data-action="visibility"]');
+    if (visBtn) visBtn.addEventListener('click', () => openVisibilityModal(doc));
     const delBtn = card.querySelector('[data-action="delete"]');
     if (delBtn) delBtn.addEventListener('click', async () => {
-      if (!confirm(`Delete "${doc.filename}"? This cannot be undone.`)) return;
-      await api(`/api/documents/${doc.id}`, { method: 'DELETE' });
+      const ok = await confirmDialog(`Delete "${doc.filename}"? This cannot be undone.`);
+      if (!ok) return;
+
+      // Optimistic removal — take the card out immediately rather than
+      // waiting on a follow-up list refresh, which previously only reflected
+      // the deletion after a manual page reload.
+      card.remove();
+      emptyState.hidden = docList.children.length > 0;
+
+      const res = await api(`/api/documents/${doc.id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        toast(`Could not delete ${doc.filename}`, { type: 'error' });
+        loadDocuments(); // put it back if the delete actually failed server-side
+        return;
+      }
       toast(`Deleted ${doc.filename}`);
-      loadDocuments();
     });
 
     generateThumbnail(doc, card.querySelector('.doc-thumb'));
@@ -250,20 +314,15 @@ if (document.getElementById('docList')) {
   // Files "stack" like Drive: every selected/dropped file gets its own queue
   // row immediately, then they upload one at a time (sequential — safer
   // against the server's per-minute rate limits than firing them in parallel).
+  // Visibility is no longer decided at upload time — every upload is private
+  // by default; use the per-file "Make public" action afterward.
   async function queueFiles(files) {
-    const isPublic = document.getElementById('isPublicCheckbox').checked;
-    const description = document.getElementById('descriptionInput').value.trim();
-    const opts = { isPublic, description };
-
     const items = Array.from(files).map((file) => ({ file, item: addQueueItem(file) }));
 
     for (const { file, item } of items) {
-      await runUpload(file, item, opts);
+      await runUpload(file, item, {});
     }
 
-    document.getElementById('isPublicCheckbox').checked = false;
-    document.getElementById('descriptionInput').hidden = true;
-    document.getElementById('descriptionInput').value = '';
     loadDocuments();
   }
 
@@ -283,15 +342,14 @@ if (document.getElementById('docList')) {
     }
   }
 
-  function uploadFileSingleShot(file, { isPublic, description }, onProgress) {
+  function uploadFileSingleShot(file, opts, onProgress) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', `${API_BASE}/api/documents/upload`);
       xhr.withCredentials = true;
       xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
       xhr.setRequestHeader('X-Filename', encodeURIComponent(file.name));
-      xhr.setRequestHeader('X-Is-Public', isPublic ? 'true' : 'false');
-      if (description) xhr.setRequestHeader('X-Description', encodeURIComponent(description));
+      xhr.setRequestHeader('X-Is-Public', 'false');
       xhr.upload.onprogress = (e) => {
         if (!e.lengthComputable) return;
         onProgress(Math.round((e.loaded / e.total) * 100));
@@ -302,7 +360,7 @@ if (document.getElementById('docList')) {
     });
   }
 
-  async function uploadFileChunked(file, { isPublic, description }, onProgress) {
+  async function uploadFileChunked(file, opts, onProgress) {
     const initRes = await api('/api/documents/upload/init', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -332,7 +390,7 @@ if (document.getElementById('docList')) {
       const completeRes = await api(`/api/documents/upload/${docId}/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: file.name, mimeType: file.type || 'application/octet-stream', isPublic, description: description || null })
+        body: JSON.stringify({ filename: file.name, mimeType: file.type || 'application/octet-stream', isPublic: false })
       });
       if (!completeRes.ok) throw new Error('Could not finalize upload');
     } catch (err) {
@@ -341,22 +399,32 @@ if (document.getElementById('docList')) {
     }
   }
 
-  document.getElementById('isPublicCheckbox').addEventListener('change', (e) => {
-    document.getElementById('descriptionInput').hidden = !e.target.checked;
-  });
-
-  browseBtn.addEventListener('click', () => fileInput.click());
+  // "New upload" in the sidebar opens the file picker directly, Drive-style.
+  document.getElementById('newUploadBtn').addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', () => {
     if (fileInput.files.length) queueFiles(fileInput.files);
     fileInput.value = ''; // allow re-selecting the same file(s) later
   });
-  ['dragenter', 'dragover'].forEach((evt) =>
-    dropZone.addEventListener(evt, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); })
-  );
-  ['dragleave', 'drop'].forEach((evt) =>
-    dropZone.addEventListener(evt, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); })
-  );
-  dropZone.addEventListener('drop', (e) => {
+
+  // Whole page is a drop target, with a full-screen overlay shown while
+  // dragging — replaces the old permanent drop-zone box that took up space
+  // at the top of the page even when you weren't uploading anything.
+  const dropOverlay = document.getElementById('dropOverlay');
+  let dragCounter = 0;
+  window.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    dragCounter++;
+    dropOverlay.hidden = false;
+  });
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('dragleave', () => {
+    dragCounter--;
+    if (dragCounter <= 0) { dragCounter = 0; dropOverlay.hidden = true; }
+  });
+  window.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dragCounter = 0;
+    dropOverlay.hidden = true;
     if (e.dataTransfer.files.length) queueFiles(e.dataTransfer.files);
   });
 
@@ -461,6 +529,42 @@ if (document.getElementById('docList')) {
     document.getElementById('granteeFound').hidden = true;
     document.getElementById('inviteBtn').disabled = true;
     confirmedGranteeEmail = null;
+  });
+
+  // ---- Visibility modal (make public / make private, per file, after upload) ----
+  const visibilityModal = document.getElementById('visibilityModal');
+  let visibilityTargetDoc = null;
+
+  function openVisibilityModal(doc) {
+    visibilityTargetDoc = doc;
+    const goingPublic = !doc.isPublic;
+    document.getElementById('visibilityModalTitle').textContent = goingPublic ? 'Make public' : 'Make private';
+    document.getElementById('visibilityModalHint').textContent = goingPublic
+      ? 'Any signed-in user will be able to find and download this file in the Public folder.'
+      : 'This file will be removed from the Public folder. Existing share links and invites are unaffected.';
+    document.getElementById('visibilityDescriptionInput').hidden = !goingPublic;
+    document.getElementById('visibilityDescriptionInput').value = '';
+    document.getElementById('visibilityConfirmBtn').textContent = goingPublic ? 'Make public' : 'Make private';
+    visibilityModal.hidden = false;
+  }
+  document.getElementById('closeVisibilityModal').addEventListener('click', () => (visibilityModal.hidden = true));
+
+  document.getElementById('visibilityConfirmBtn').addEventListener('click', async () => {
+    const doc = visibilityTargetDoc;
+    if (!doc) return;
+    const goingPublic = !doc.isPublic;
+    const description = document.getElementById('visibilityDescriptionInput').value.trim();
+
+    const res = await api(`/api/documents/${doc.id}/visibility`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isPublic: goingPublic, description: description || undefined })
+    });
+    visibilityModal.hidden = true;
+    if (!res.ok) return toast('Could not update visibility', { type: 'error' });
+
+    toast(goingPublic ? `${doc.filename} is now public` : `${doc.filename} is now private`, { type: 'success' });
+    loadDocuments();
   });
 
   loadDocuments();
