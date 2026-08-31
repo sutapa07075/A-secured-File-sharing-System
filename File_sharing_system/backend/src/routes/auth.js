@@ -85,7 +85,9 @@ router.get('/google/callback', authLimiter, async (req, res) => {
       ip: req.ip, userAgent: req.headers['user-agent']
     });
 
-    res.redirect(process.env.FRONTEND_ORIGIN + '/dashboard.html');
+    // No .html extension — keeps this consistent with every other internal
+    // link, so serve's clean-URL redirect never has a chance to fire.
+    res.redirect(process.env.FRONTEND_ORIGIN + '/dashboard');
   } catch (err) {
     console.error('OAuth callback failed', err);
     res.status(500).json({ error: 'Authentication failed' });

@@ -56,7 +56,7 @@
     async function run() {
       const docId = qsParam('doc');
       const code = qsParam('code'); // present when opened from a share link
-      const backTo = qsParam('from') || 'dashboard.html';
+      const backTo = qsParam('from') || 'dashboard';
       document.getElementById('backBtn').addEventListener('click', () => { window.location.href = backTo; });
 
       if (!docId) {

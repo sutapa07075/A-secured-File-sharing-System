@@ -14,7 +14,7 @@ async function zkApi(path, opts = {}) {
   if (res.status === 401 && path !== '/api/auth/refresh') {
     const refreshed = await fetch(`${ZK_API_BASE}/api/auth/refresh`, { method: 'POST', credentials: 'include' });
     if (refreshed.ok) return zkApi(path, opts);
-    window.location.href = '/index.html';
+    window.location.href = '/';
     throw new Error('Not authenticated');
   }
   return res;
@@ -225,7 +225,7 @@ async function downloadAndDecrypt(doc) {
 document.getElementById('refreshBtn').addEventListener('click', loadDocuments);
 document.getElementById('logoutBtn').addEventListener('click', async () => {
   await zkApi('/api/auth/logout', { method: 'POST' });
-  window.location.href = '/index.html';
+  window.location.href = '/';
 });
 
 // ---------------- Share modal ----------------
@@ -252,7 +252,7 @@ document.getElementById('createLinkBtn').addEventListener('click', async () => {
   if (!res.ok) return alert('Could not create link');
   const { shareCode } = await res.json();
 
-  const shareUrl = `${window.location.origin}/zk-share.html?doc=${activeShareDoc.id}&code=${shareCode}#key=${linkKeyRaw}`;
+  const shareUrl = `${window.location.origin}/zk-share?doc=${activeShareDoc.id}&code=${shareCode}#key=${linkKeyRaw}`;
   document.getElementById('linkResultInput').value = shareUrl;
   document.getElementById('linkResult').hidden = false;
 });

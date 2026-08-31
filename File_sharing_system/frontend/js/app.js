@@ -18,7 +18,7 @@ async function api(path, opts = {}) {
   if (res.status === 401 && path !== '/api/auth/refresh') {
     const refreshed = await fetch(`${API_BASE}/api/auth/refresh`, { method: 'POST', credentials: 'include' });
     if (refreshed.ok) return api(path, opts); // retry once after refresh
-    window.location.href = '/index.html';
+    window.location.href = '/';
     throw new Error('Not authenticated');
   }
   return res;
@@ -75,7 +75,7 @@ if (document.getElementById('docList')) {
       </div>
     `;
     row.querySelector('[data-action="view"]').addEventListener('click', () => {
-      window.open(`reader.html?doc=${doc.id}`, '_blank');
+      window.open(`reader?doc=${doc.id}`, '_blank');
     });
     row.querySelector('[data-action="download"]').addEventListener('click', () => {
       window.location.href = `${API_BASE}/api/documents/${doc.id}/download`;
@@ -208,7 +208,7 @@ if (document.getElementById('docList')) {
   document.getElementById('refreshBtn').addEventListener('click', loadDocuments);
   document.getElementById('logoutBtn').addEventListener('click', async () => {
     await api('/api/auth/logout', { method: 'POST' });
-    window.location.href = '/index.html';
+    window.location.href = '/';
   });
 
   // ---- Share modal ----

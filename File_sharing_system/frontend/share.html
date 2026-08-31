@@ -33,13 +33,15 @@
 
     async function run() {
       const params = new URLSearchParams(window.location.search);
-      // Support both /share.html?doc=<id>&code=<code> and /share.html/<id>?code=<code>
-      // (the latter from a server that constructs the path directly).
+      // Support both /share?doc=<id>&code=<code> and /share/<id>?code=<code>
+      // (the latter from a server that constructs the path directly). No .html
+      // extension is used in links so serve's clean-URL redirect never fires
+      // and never strips the query string in the process.
       let docId = params.get('doc');
       const code = params.get('code');
       if (!docId) {
         const pathParts = window.location.pathname.split('/').filter(Boolean);
-        docId = pathParts[pathParts.length - 1] !== 'share.html' ? pathParts[pathParts.length - 1] : null;
+        docId = pathParts[pathParts.length - 1] !== 'share' ? pathParts[pathParts.length - 1] : null;
       }
 
       const statusTitle = document.getElementById('statusTitle');
@@ -63,7 +65,7 @@
         document.getElementById('fileName').textContent = info.filename;
         document.getElementById('fileMeta').textContent = info.mimeType || '';
         document.getElementById('downloadBtn').href = `${API_BASE}/api/documents/${docId}/download?code=${encodeURIComponent(code)}`;
-        document.getElementById('viewBtn').href = `reader.html?doc=${docId}&code=${encodeURIComponent(code)}&from=${encodeURIComponent(window.location.href)}`;
+        document.getElementById('viewBtn').href = `reader?doc=${docId}&code=${encodeURIComponent(code)}&from=${encodeURIComponent(window.location.href)}`;
         document.getElementById('fileCard').hidden = false;
       } catch (err) {
         statusTitle.textContent = 'Could not open document';
