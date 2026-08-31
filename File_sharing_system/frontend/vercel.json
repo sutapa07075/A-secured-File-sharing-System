@@ -9,12 +9,16 @@
       "destination": "/dashboard.html"
     },
     {
-      "source": "/login",
-      "destination": "/login.html"
+      "source": "/reader",
+      "destination": "/reader.html"
     },
     {
       "source": "/share",
       "destination": "/share.html"
+    },
+    {
+      "source": "/index",
+      "destination": "/index.html"
     }
   ]
 }
