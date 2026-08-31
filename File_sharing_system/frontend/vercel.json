@@ -23,6 +23,10 @@
     {
       "source": "/index",
       "destination": "/index.html"
+    },
+    {
+      "source": "/public",
+      "destination": "/public.html"
     }
   ]
 }
