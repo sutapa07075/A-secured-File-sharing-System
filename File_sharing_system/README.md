@@ -43,7 +43,11 @@ npm run migrate    # applies schema.sql (tables + RLS policies) to your database
 npm run dev         # starts the API on :4000
 ```
 
-Serve the frontend as static files (any static server works — the files have no build step):
+Serve the frontend as static files. `npx serve` picks up the included `frontend/serve.json`
+automatically, which disables "clean URL" rewriting — without it, `serve` silently redirects
+`reader.html?doc=...` to `/reader` and **drops the query string**, breaking the document reader
+and any other page that relies on `?param=...`. If you use a different static server, make sure it
+doesn't do URL rewriting/redirects either (Python's `http.server` and VS Code Live Server don't).
 
 ```bash
 cd frontend
@@ -60,7 +64,7 @@ In Google Cloud Console → APIs & Services → Credentials:
 - Authorized redirect URI: `http://localhost:4000/api/auth/google/callback` (update for production domain)
 - Copy the Client ID/Secret into `.env`
 
-## 4. Swapping in real KMS (For Production we have to use AWS KMS or other service)
+## 4. Swapping in real KMS (recommended before production)
 
 `src/services/kms.js` currently wraps/unwraps DEKs using a local master key from env — fine for
 getting started, but the whole point of KMS is that the master key never lives in your app's
@@ -147,7 +151,7 @@ Any document can be marked public at upload time (checkbox in the upload zone). 
 
 If you're upgrading an existing database, re-run `npm run migrate` — `schema.sql` uses `ADD COLUMN IF NOT EXISTS` for `is_public`, `description_encrypted`, `description_iv`, `description_auth_tag`, so it's safe to re-apply.
 
-## 9. For production
+## 9. Notes / things to decide before going live
 
 - **Zero-knowledge option**: the current design encrypts server-side (server can decrypt via KMS,
   but the database/storage alone cannot). If you want the server to *never* see plaintext even

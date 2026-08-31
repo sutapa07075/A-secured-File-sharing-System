@@ -20,22 +20,18 @@
 
   <main class="dashboard">
     <section class="upload-zone" id="dropZone">
-      <input type="file" id="fileInput" hidden />
+      <input type="file" id="fileInput" hidden multiple />
       <div class="upload-inner">
         <span class="upload-icon">&#8593;</span>
-        <p><strong>Drop a file</strong> or <button id="browseBtn" class="link-btn">browse</button></p>
-        <p class="hint">Encrypted in your browser session before upload. Max file size depends on server config.</p>
+        <p><strong>Drop files</strong> or <button id="browseBtn" class="link-btn">browse</button></p>
+        <p class="hint">Select or drop multiple files at once. Encrypted before upload — max file size depends on server config.</p>
       </div>
       <div class="upload-options">
         <label class="checkbox-row">
           <input type="checkbox" id="isPublicCheckbox" />
-          <span>Make public — any signed-in user can find and download this in the Public folder</span>
+          <span>Make these public — any signed-in user can find and download them in the Public folder</span>
         </label>
-        <input type="text" id="descriptionInput" placeholder="What does this file contain? (shown in the public folder)" hidden />
-      </div>
-      <div id="uploadProgress" class="progress-row" hidden>
-        <div class="progress-track"><div id="progressBar" class="progress-fill"></div></div>
-        <span id="progressLabel">0%</span>
+        <input type="text" id="descriptionInput" placeholder="What do these files contain? (shown in the public folder)" hidden />
       </div>
     </section>
 
@@ -44,10 +40,22 @@
         <h2>Your documents</h2>
         <button id="refreshBtn" class="btn-ghost small">Refresh</button>
       </div>
-      <div id="docList" class="doc-list"></div>
+      <div id="docList" class="doc-grid"></div>
       <p id="emptyState" class="empty-state" hidden>Nothing here yet — upload your first file above.</p>
     </section>
   </main>
+
+  <!-- Upload queue panel (Drive-style, bottom-right) -->
+  <div id="uploadQueuePanel" class="upload-queue-panel" hidden>
+    <div class="uqp-header">
+      <span id="uqpTitle">Uploading…</span>
+      <div class="uqp-header-actions">
+        <button id="uqpMinimize" title="Minimize">&#8211;</button>
+        <button id="uqpClose" title="Close">&#10005;</button>
+      </div>
+    </div>
+    <div id="uqpList" class="uqp-list"></div>
+  </div>
 
   <!-- Share modal -->
   <div id="shareModal" class="modal-backdrop" hidden>
@@ -88,6 +96,8 @@
     </div>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="js/toast.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

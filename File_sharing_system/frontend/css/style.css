@@ -165,3 +165,87 @@ h1, h2, h3, h4 { font-family: 'Fraunces', serif; font-weight: 600; margin: 0; }
   .dashboard { padding: 24px 16px 60px; }
   .auth-card { padding: 32px 24px; }
 }
+
+/* ---------- Toasts ---------- */
+.toast-container {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+  display: flex; flex-direction: column; gap: 8px; z-index: 100;
+  align-items: center; pointer-events: none;
+}
+.toast {
+  background: var(--panel); border: 1px solid var(--line); color: var(--text);
+  padding: 11px 18px; border-radius: 8px; font-size: 13.5px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  opacity: 0; transform: translateY(8px); transition: opacity 0.2s ease, transform 0.2s ease;
+  max-width: 90vw;
+}
+.toast-show { opacity: 1; transform: translateY(0); }
+.toast-error { border-color: var(--warn); color: var(--warn); }
+.toast-success { border-color: var(--accent); }
+
+/* ---------- Upload queue panel (Drive-style, bottom-right) ---------- */
+.upload-queue-panel {
+  position: fixed; right: 20px; bottom: 20px; width: 340px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.45); z-index: 90; overflow: hidden;
+}
+.uqp-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; background: var(--panel-2); border-bottom: 1px solid var(--line);
+  font-size: 13px; font-weight: 500;
+}
+.uqp-header-actions { display: flex; gap: 4px; }
+.uqp-header-actions button {
+  background: none; border: none; color: var(--text-dim); cursor: pointer;
+  font-size: 15px; line-height: 1; padding: 2px 6px; border-radius: 4px;
+}
+.uqp-header-actions button:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+.uqp-list { max-height: 320px; overflow-y: auto; }
+.uqp-list.collapsed { display: none; }
+.uqp-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  border-bottom: 1px solid var(--line); font-size: 12.5px;
+}
+.uqp-item:last-child { border-bottom: none; }
+.uqp-icon { width: 20px; text-align: center; flex-shrink: 0; }
+.uqp-item-body { flex: 1; min-width: 0; }
+.uqp-item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.uqp-item-track { height: 3px; background: var(--line); border-radius: 2px; margin-top: 5px; overflow: hidden; }
+.uqp-item-fill { height: 100%; width: 0%; background: var(--accent); transition: width 0.2s ease; }
+.uqp-item-fill.error { background: var(--warn); }
+.uqp-status { flex-shrink: 0; font-size: 11px; color: var(--text-dim); }
+.uqp-status.done { color: var(--accent); }
+.uqp-status.error { color: var(--warn); }
+.uqp-retry {
+  background: none; border: 1px solid var(--line); color: var(--text-dim);
+  border-radius: 5px; padding: 2px 8px; font-size: 11px; cursor: pointer;
+}
+.uqp-retry:hover { color: var(--text); border-color: var(--accent); }
+
+/* ---------- Document grid (Drive-style cards) ---------- */
+.doc-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px;
+}
+.doc-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  overflow: hidden; transition: border-color 0.15s ease;
+}
+.doc-card:hover { border-color: var(--accent-dim); }
+.doc-thumb {
+  height: 110px; background: var(--panel-2); display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden; cursor: pointer;
+}
+.doc-thumb img, .doc-thumb canvas { width: 100%; height: 100%; object-fit: cover; }
+.doc-thumb .doc-thumb-icon { font-size: 30px; color: var(--text-dim); }
+.doc-card-body { padding: 10px 12px; }
+.doc-card-name {
+  font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; cursor: pointer;
+}
+.doc-card-sub { color: var(--text-dim); font-size: 11px; margin-top: 3px; }
+.doc-card-actions { display: flex; gap: 6px; padding: 0 12px 10px; }
+.doc-card-actions button {
+  flex: 1; background: none; border: 1px solid var(--line); color: var(--text-dim);
+  border-radius: 6px; padding: 5px 0; font-size: 11px; cursor: pointer;
+}
+.doc-card-actions button:hover { color: var(--text); border-color: var(--accent); }

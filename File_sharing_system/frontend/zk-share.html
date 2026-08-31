@@ -28,6 +28,7 @@
     </div>
   </main>
   <script src="js/webcrypto.js"></script>
+  <script src="js/toast.js"></script>
   <script>
     const ZK_API_BASE = window.location.origin.replace(/:\d+$/, ':4000');
 
@@ -65,7 +66,7 @@
 
         document.getElementById('downloadBtn').addEventListener('click', async () => {
           const fileRes = await fetch(`${ZK_API_BASE}/api/zk/documents/${docId}/download?code=${encodeURIComponent(code)}`);
-          if (!fileRes.ok) return alert('Download failed');
+          if (!fileRes.ok) { toast('Download failed', { type: 'error' }); return; }
           const fileIv = fileRes.headers.get('X-File-Iv') || info.fileIv;
           const ciphertext = await fileRes.arrayBuffer();
           const plaintext = await VaultCrypto.decryptBuffer(fileKey, ciphertext, fileIv);

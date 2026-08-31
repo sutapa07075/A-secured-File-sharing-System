@@ -42,7 +42,7 @@ async function init() {
 
 async function setupVault() {
   const passphrase = passphraseInput.value;
-  if (passphrase.length < 8) return alert('Use at least 8 characters for your vault passphrase.');
+  if (passphrase.length < 8) { toast('Use at least 8 characters for your vault passphrase.', { type: 'error' }); return; }
 
   const keypair = await VaultCrypto.generateUserKeypair();
   const { wrappedPrivateKey, iv, salt } = await VaultCrypto.wrapPrivateKeyWithPassphrase(keypair.privateKey, passphrase);
@@ -53,7 +53,7 @@ async function setupVault() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ publicKey: publicKeyB64, wrappedPrivateKey, iv, salt })
   });
-  if (!res.ok) return alert('Could not create your vault. Try again.');
+  if (!res.ok) { toast('Could not create your vault. Try again.', { type: 'error' }); return; }
 
   myPrivateKey = keypair.privateKey;
   myPublicKeyB64 = publicKeyB64;
@@ -69,7 +69,7 @@ async function unlockVault(bundleRes) {
     myPublicKeyB64 = bundle.publicKey;
     enterVault();
   } catch (err) {
-    alert('Wrong passphrase, or this vault was created in a different browser.');
+    toast('Wrong passphrase, or this vault was created in a different browser.', { type: 'error' });
   }
 }
 
@@ -131,13 +131,13 @@ async function uploadFile(file) {
 
 browseBtn.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', () => {
-  if (fileInput.files[0]) uploadFile(fileInput.files[0]).catch((e) => alert('Upload failed: ' + e.message));
+  if (fileInput.files[0]) uploadFile(fileInput.files[0]).catch((e) => toast('Upload failed: ' + e.message, { type: 'error' }));
 });
 ['dragenter', 'dragover'].forEach((evt) => dropZone.addEventListener(evt, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); }));
 ['dragleave', 'drop'].forEach((evt) => dropZone.addEventListener(evt, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); }));
 dropZone.addEventListener('drop', (e) => {
   const file = e.dataTransfer.files[0];
-  if (file) uploadFile(file).catch((err) => alert('Upload failed: ' + err.message));
+  if (file) uploadFile(file).catch((err) => toast('Upload failed: ' + err.message, { type: 'error' }));
 });
 
 // ---------------- List + download ----------------
@@ -209,7 +209,7 @@ function renderDocRow(doc) {
 
 async function downloadAndDecrypt(doc) {
   const res = await zkApi(`/api/zk/documents/${doc.id}/download`);
-  if (!res.ok) return alert('Download failed');
+  if (!res.ok) { toast('Download failed', { type: 'error' }); return; }
   const fileIv = res.headers.get('X-File-Iv');
   const ciphertext = await res.arrayBuffer();
   const plaintext = await VaultCrypto.decryptBuffer(doc.fileKey, ciphertext, fileIv);
@@ -249,7 +249,7 @@ document.getElementById('createLinkBtn').addEventListener('click', async () => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ wrappedKey, role })
   });
-  if (!res.ok) return alert('Could not create link');
+  if (!res.ok) { toast('Could not create link', { type: 'error' }); return; }
   const { shareCode } = await res.json();
 
   const shareUrl = `${window.location.origin}/zk-share?doc=${activeShareDoc.id}&code=${shareCode}#key=${linkKeyRaw}`;
@@ -268,7 +268,7 @@ document.getElementById('inviteBtn').addEventListener('click', async () => {
   if (!granteeEmail) return;
 
   const lookupRes = await zkApi(`/api/zk/keys/lookup?email=${encodeURIComponent(granteeEmail)}`);
-  if (!lookupRes.ok) return alert((await lookupRes.json()).error || 'Could not find that person');
+  if (!lookupRes.ok) { toast((await lookupRes.json()).error || 'Could not find that person', { type: 'error' }); return; }
   const { userId, publicKey } = await lookupRes.json();
 
   const granteePublicKey = await VaultCrypto.importPublicKeyFromB64(publicKey);
@@ -279,9 +279,9 @@ document.getElementById('inviteBtn').addEventListener('click', async () => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ granteeUserId: userId, wrappedKey, role })
   });
-  if (!res.ok) return alert('Could not share with that person');
+  if (!res.ok) { toast('Could not share with that person', { type: 'error' }); return; }
   document.getElementById('granteeEmail').value = '';
-  alert(`Shared with ${granteeEmail}`);
+  toast(`Shared with ${granteeEmail}`, { type: 'success' });
 });
 
 init();
