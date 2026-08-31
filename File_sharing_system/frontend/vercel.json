@@ -27,6 +27,14 @@
     {
       "source": "/public",
       "destination": "/public.html"
+    },
+    {
+      "source": "/zk",
+      "destination": "/zk.html"
+    },
+    {
+      "source": "/zk-share",
+      "destination": "/zk-share.html"
     }
   ]
 }
