@@ -3,6 +3,18 @@
     {
       "source": "/api/:path*",
       "destination": "https://internet-technology-lab.onrender.com/api/:path*"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/login.html"
+    },
+    {
+      "source": "/share",
+      "destination": "/share.html"
     }
   ]
 }
