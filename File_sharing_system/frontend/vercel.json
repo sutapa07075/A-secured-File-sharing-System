@@ -1,8 +1,12 @@
 {
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "https://internet-technology-lab.onrender.com/api/:path*"
+      "source": "/api/(.*)",
+      "destination": "https://internet-technology-lab.onrender.com/api/$1"
+    },
+    {
+      "source": "/auth/(.*)",
+      "destination": "https://internet-technology-lab.onrender.com/api/auth/$1"
     },
     {
       "source": "/dashboard",
