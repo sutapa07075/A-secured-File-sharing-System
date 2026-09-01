@@ -9,37 +9,45 @@
 <body>
   <main class="auth-screen">
     <div class="auth-card" style="max-width:480px;">
-      <div class="brand">
+      <div class="brand" style="justify-content:center; margin-bottom:28px;">
         <span class="brand-mark">&#9633;</span>
         <span class="brand-name">DocFile</span>
       </div>
-      <h1 id="statusTitle">Checking link…</h1>
-      <p class="sub" id="statusSub">One moment.</p>
-      <div id="fileCard" hidden style="margin-top:20px;">
-        <div class="doc-row">
+
+      <h1 id="statusTitle" style="text-align:center;">Checking link…</h1>
+      <p class="sub" id="statusSub" style="text-align:center;">One moment.</p>
+
+      <div id="fileCard" hidden style="margin-top:24px;">
+        <!-- Document info row -->
+        <div class="doc-row" style="margin-bottom:20px;">
+          <div class="doc-icon">&#128196;</div>
           <div class="doc-meta">
             <div class="doc-name" id="fileName"></div>
             <div class="doc-sub" id="fileMeta"></div>
           </div>
         </div>
-        <a id="downloadBtn" class="btn-primary" style="margin-top:16px; width:100%; display:block; text-align:center; text-decoration:none; box-sizing:border-box;">Download</a>
-        <a id="viewBtn" class="btn-ghost" style="margin-top:10px; width:100%; display:block; text-align:center; text-decoration:none; box-sizing:border-box;">View in browser</a>
+
+        <!-- Buttons -->
+        <a id="downloadBtn" class="btn-primary" style="width:100%; display:block; text-align:center; box-sizing:border-box; text-decoration:none;">
+          Download
+        </a>
+        <a id="viewBtn" class="btn-ghost" style="width:100%; display:block; text-align:center; box-sizing:border-box; text-decoration:none; margin-top:12px;">
+          View in browser
+        </a>
       </div>
     </div>
   </main>
+
   <script>
     const API_BASE = ['localhost', '127.0.0.1'].includes(window.location.hostname)
-      ? window.location.origin.replace(/:\d+$/, ':4000') // local dev: frontend and backend on different ports
-      : ''; // production: same-origin, routed to the real backend via the hosting platform's rewrites/proxy
+      ? window.location.origin.replace(/:\d+$/, ':4000')
+      : '';
 
     async function run() {
       const params = new URLSearchParams(window.location.search);
-      // Support both /share?doc=<id>&code=<code> and /share/<id>?code=<code>
-      // (the latter from a server that constructs the path directly). No .html
-      // extension is used in links so serve's clean-URL redirect never fires
-      // and never strips the query string in the process.
       let docId = params.get('doc');
       const code = params.get('code');
+
       if (!docId) {
         const pathParts = window.location.pathname.split('/').filter(Boolean);
         docId = pathParts[pathParts.length - 1] !== 'share' ? pathParts[pathParts.length - 1] : null;
@@ -59,20 +67,27 @@
           credentials: 'include'
         });
         if (!res.ok) throw new Error((await res.json()).error || 'Link expired or invalid');
+
         const info = await res.json();
 
         statusTitle.textContent = 'Ready to download';
         statusSub.textContent = 'This document was shared with you.';
+
         document.getElementById('fileName').textContent = info.filename;
         document.getElementById('fileMeta').textContent = info.mimeType || '';
-        document.getElementById('downloadBtn').href = `${API_BASE}/api/documents/${docId}/download?code=${encodeURIComponent(code)}`;
-        document.getElementById('viewBtn').href = `reader?doc=${docId}&code=${encodeURIComponent(code)}&from=${encodeURIComponent(window.location.href)}`;
+
+        document.getElementById('downloadBtn').href =
+          `${API_BASE}/api/documents/${docId}/download?code=${encodeURIComponent(code)}`;
+        document.getElementById('viewBtn').href =
+          `reader?doc=${docId}&code=${encodeURIComponent(code)}&from=${encodeURIComponent(window.location.href)}`;
+
         document.getElementById('fileCard').hidden = false;
       } catch (err) {
         statusTitle.textContent = 'Could not open document';
         statusSub.textContent = err.message || 'The link may have expired or been revoked.';
       }
     }
+
     run();
   </script>
 </body>
