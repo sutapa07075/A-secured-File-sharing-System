@@ -10,37 +10,32 @@
   <main class="auth-screen">
     <div class="auth-card">
       <div class="brand" style="justify-content:center; margin-bottom:28px;">
-        <span class="brand-mark" aria-hidden="true">&#9633;</span>
-        <h1 class="brand-name">DocFile</h1>
+        <span class="brand-mark">&#9633;</span>
+        <span class="brand-name">DocFile</span>
       </div>
 
-      <div class="auth-tabs" role="tablist" aria-label="Sign in or create an account">
-        <button class="auth-tab active" data-tab="signin" role="tab" aria-selected="true" aria-controls="signinForm" id="tabSignin">Sign in</button>
-        <button class="auth-tab" data-tab="register" role="tab" aria-selected="false" aria-controls="registerForm" id="tabRegister">Create account</button>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="signin">Sign in</button>
+        <button class="auth-tab" data-tab="register">Create account</button>
       </div>
 
-      <form id="signinForm" class="auth-form" role="tabpanel" aria-labelledby="tabSignin">
-        <label class="sr-only" for="signinEmail">Email</label>
+      <form id="signinForm" class="auth-form">
         <input type="email" id="signinEmail" class="modal-input" placeholder="Email" required autocomplete="email" />
-        <label class="sr-only" for="signinPassword">Password</label>
         <input type="password" id="signinPassword" class="modal-input" placeholder="Password" required autocomplete="current-password" />
-        <button type="submit" class="btn-primary" id="signinSubmit">Sign in</button>
+        <button type="submit" class="btn-primary">Sign in</button>
       </form>
 
-      <form id="registerForm" class="auth-form" role="tabpanel" aria-labelledby="tabRegister" hidden>
-        <label class="sr-only" for="registerName">Name</label>
+      <form id="registerForm" class="auth-form" hidden>
         <input type="text" id="registerName" class="modal-input" placeholder="Name" autocomplete="name" />
-        <label class="sr-only" for="registerEmail">Email</label>
         <input type="email" id="registerEmail" class="modal-input" placeholder="Email" required autocomplete="email" />
-        <label class="sr-only" for="registerPassword">Password (minimum 8 characters)</label>
         <input type="password" id="registerPassword" class="modal-input" placeholder="Password (min. 8 characters)" required autocomplete="new-password" />
-        <button type="submit" class="btn-primary" id="registerSubmit">Create account</button>
+        <button type="submit" class="btn-primary">Create account</button>
       </form>
 
       <div class="auth-divider"><span>or</span></div>
 
       <a class="btn-google" id="googleLoginBtn" href="#">
-        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.98v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.98A9 9 0 0 0 0 9c0 1.45.35 2.83.98 4.03l2.97-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .98 4.97l2.97 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.98v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.98A9 9 0 0 0 0 9c0 1.45.35 2.83.98 4.03l2.97-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .98 4.97l2.97 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
         Continue with Google
       </a>
     </div>
@@ -54,53 +49,26 @@
 
     document.querySelectorAll('.auth-tab').forEach((tab) => {
       tab.addEventListener('click', () => {
-        document.querySelectorAll('.auth-tab').forEach((t) => {
-          t.classList.remove('active');
-          t.setAttribute('aria-selected', 'false');
-        });
+        document.querySelectorAll('.auth-tab').forEach((t) => t.classList.remove('active'));
         tab.classList.add('active');
-        tab.setAttribute('aria-selected', 'true');
         document.getElementById('signinForm').hidden = tab.dataset.tab !== 'signin';
         document.getElementById('registerForm').hidden = tab.dataset.tab !== 'register';
       });
     });
 
-    // Visible "working" feedback while the request is in flight — without
-    // this, a slow network makes the button feel unresponsive/broken between
-    // the click and the page actually navigating.
-    function setButtonLoading(btn, isLoading, loadingLabel) {
-      if (isLoading) {
-        btn.dataset.originalText = btn.textContent;
-        btn.textContent = loadingLabel;
-        btn.disabled = true;
-        btn.setAttribute('aria-busy', 'true');
-      } else {
-        btn.textContent = btn.dataset.originalText || btn.textContent;
-        btn.disabled = false;
-        btn.removeAttribute('aria-busy');
+    async function submitAuth(path, body) {
+      const res = await fetch(`${API_BASE}${path}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast(data.error || 'Something went wrong', { type: 'error' });
+        return;
       }
-    }
-
-    async function submitAuth(path, body, submitBtn, loadingLabel) {
-      setButtonLoading(submitBtn, true, loadingLabel);
-      try {
-        const res = await fetch(`${API_BASE}${path}`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          toast(data.error || 'Something went wrong', { type: 'error' });
-          setButtonLoading(submitBtn, false);
-          return;
-        }
-        window.location.href = '/dashboard';
-      } catch (err) {
-        toast('Network error — check your connection and try again', { type: 'error' });
-        setButtonLoading(submitBtn, false);
-      }
+      window.location.href = '/dashboard';
     }
 
     document.getElementById('signinForm').addEventListener('submit', (e) => {
@@ -108,7 +76,7 @@
       submitAuth('/api/auth/login', {
         email: document.getElementById('signinEmail').value.trim(),
         password: document.getElementById('signinPassword').value
-      }, document.getElementById('signinSubmit'), 'Signing in…');
+      });
     });
 
     document.getElementById('registerForm').addEventListener('submit', (e) => {
@@ -117,7 +85,7 @@
         email: document.getElementById('registerEmail').value.trim(),
         password: document.getElementById('registerPassword').value,
         displayName: document.getElementById('registerName').value.trim()
-      }, document.getElementById('registerSubmit'), 'Creating account…');
+      });
     });
   </script>
 </body>

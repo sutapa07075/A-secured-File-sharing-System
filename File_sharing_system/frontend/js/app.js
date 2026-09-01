@@ -48,22 +48,6 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-// Visible "working" feedback for any button that triggers a network request —
-// without this, a slow connection makes the click feel like it didn't
-// register, since nothing on screen changes until the response arrives.
-function setButtonLoading(btn, isLoading, loadingLabel) {
-  if (isLoading) {
-    btn.dataset.originalText = btn.textContent;
-    btn.textContent = loadingLabel || 'Working…';
-    btn.disabled = true;
-    btn.setAttribute('aria-busy', 'true');
-  } else {
-    btn.textContent = btn.dataset.originalText || btn.textContent;
-    btn.disabled = false;
-    btn.removeAttribute('aria-busy');
-  }
-}
-
 // Populates the sidebar's user widget (avatar/name/email), if that markup is
 // present on the page. Shared by dashboard.html and public.html.
 async function loadSidebarUser() {
@@ -102,7 +86,7 @@ function confirmDialog(message, { confirmText = 'Delete', cancelText = 'Cancel',
           <p style="margin:0; font-size:14px; line-height:1.5;">${escapeHtml(message)}</p>
           <div class="row" style="justify-content:flex-end; gap:8px;">
             <button class="btn-ghost small" data-role="cancel">${escapeHtml(cancelText)}</button>
-            <button class="btn-primary small" data-role="confirm" style="${danger ? 'background:var(--warn);border-color:var(--warn);color:var(--on-accent);' : ''}">${escapeHtml(confirmText)}</button>
+            <button class="btn-primary small" data-role="confirm" style="${danger ? 'background:var(--warn);border-color:var(--warn);color:#1a0f0a;' : ''}">${escapeHtml(confirmText)}</button>
           </div>
         </div>
       </div>`;
@@ -446,12 +430,7 @@ if (document.getElementById('docList')) {
     if (e.dataTransfer.files.length) queueFiles(e.dataTransfer.files);
   });
 
-  document.getElementById('refreshBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('refreshBtn');
-    setButtonLoading(btn, true, 'Refreshing…');
-    await loadDocuments();
-    setButtonLoading(btn, false);
-  });
+  document.getElementById('refreshBtn').addEventListener('click', loadDocuments);
   document.getElementById('logoutBtn').addEventListener('click', async () => {
     await api('/api/auth/logout', { method: 'POST' });
     window.location.href = '/';
@@ -475,15 +454,12 @@ if (document.getElementById('docList')) {
   document.getElementById('closeShareModal').addEventListener('click', () => (shareModal.hidden = true));
 
   document.getElementById('createLinkBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('createLinkBtn');
     const role = document.getElementById('linkRole').value;
-    setButtonLoading(btn, true, 'Creating…');
     const res = await api(`/api/documents/${activeShareDocId}/share`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ scope: 'link', role })
     });
-    setButtonLoading(btn, false);
     if (!res.ok) return toast('Could not create link', { type: 'error' });
     const { shareUrl } = await res.json();
     // shareUrl is built server-side and already includes the document id + code.
@@ -500,7 +476,6 @@ if (document.getElementById('docList')) {
   // Verify the email belongs to a real registered user before allowing an
   // invite, and show exactly who will be invited so there's no ambiguity.
   document.getElementById('checkEmailBtn').addEventListener('click', async () => {
-    const checkBtn = document.getElementById('checkEmailBtn');
     const email = document.getElementById('granteeEmail').value.trim();
     const foundBox = document.getElementById('granteeFound');
     const notFoundBox = document.getElementById('granteeNotFound');
@@ -511,9 +486,7 @@ if (document.getElementById('docList')) {
     confirmedGranteeEmail = null;
     if (!email) return;
 
-    setButtonLoading(checkBtn, true, 'Checking…');
     const res = await api(`/api/documents/users/lookup?email=${encodeURIComponent(email)}`);
-    setButtonLoading(checkBtn, false);
     if (res.status === 404) {
       notFoundBox.textContent = 'No Vault account found for that email. They need to sign in with Google once before you can share with them.';
       notFoundBox.hidden = false;
@@ -543,15 +516,12 @@ if (document.getElementById('docList')) {
 
   document.getElementById('inviteBtn').addEventListener('click', async () => {
     if (!confirmedGranteeEmail) return;
-    const inviteBtn = document.getElementById('inviteBtn');
     const role = document.getElementById('granteeRole').value;
-    setButtonLoading(inviteBtn, true, 'Inviting…');
     const res = await api(`/api/documents/${activeShareDocId}/share`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ scope: 'restricted', granteeEmail: confirmedGranteeEmail, role })
     });
-    setButtonLoading(inviteBtn, false);
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       return toast(body.error || 'Could not share with that person', { type: 'error' });
@@ -584,17 +554,14 @@ if (document.getElementById('docList')) {
   document.getElementById('visibilityConfirmBtn').addEventListener('click', async () => {
     const doc = visibilityTargetDoc;
     if (!doc) return;
-    const confirmBtn = document.getElementById('visibilityConfirmBtn');
     const goingPublic = !doc.isPublic;
     const description = document.getElementById('visibilityDescriptionInput').value.trim();
 
-    setButtonLoading(confirmBtn, true, 'Saving…');
     const res = await api(`/api/documents/${doc.id}/visibility`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ isPublic: goingPublic, description: description || undefined })
     });
-    setButtonLoading(confirmBtn, false);
     visibilityModal.hidden = true;
     if (!res.ok) return toast('Could not update visibility', { type: 'error' });
 

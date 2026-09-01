@@ -10,8 +10,6 @@ function toast(message, { type = 'info', duration = 4000 } = {}) {
     container = document.createElement('div');
     container.id = 'toastContainer';
     container.className = 'toast-container';
-    container.setAttribute('role', 'status');
-    container.setAttribute('aria-live', 'polite');
     document.body.appendChild(container);
   }
 

@@ -37,13 +37,13 @@
 
     <main class="main-content">
       <div class="section-head">
-        <h1>Public folder</h1>
+        <h2>Public folder</h2>
         <button id="refreshBtn" class="btn-ghost small">Refresh</button>
       </div>
       <p class="hint" style="margin-bottom:22px;">
         Files anyone signed in to DocFile has chosen to make public — view or download any of these.
       </p>
-      <div id="docList" class="doc-grid" aria-live="polite"></div>
+      <div id="docList" class="doc-grid"></div>
       <p id="emptyState" class="empty-state" hidden>No public files yet.</p>
     </main>
   </div>
@@ -178,15 +178,7 @@
       } catch {}
     }
 
-    document.getElementById('refreshBtn').addEventListener('click', async () => {
-      const btn = document.getElementById('refreshBtn');
-      const original = btn.textContent;
-      btn.textContent = 'Refreshing…';
-      btn.disabled = true;
-      await loadPublicDocuments();
-      btn.textContent = original;
-      btn.disabled = false;
-    });
+    document.getElementById('refreshBtn').addEventListener('click', loadPublicDocuments);
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       await api('/api/auth/logout', { method: 'POST' });
       window.location.href = '/';
