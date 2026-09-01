@@ -133,7 +133,7 @@ button {
 .btn-new {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 12px;
   justify-content: center;
   background: linear-gradient(135deg, var(--accent), var(--accent-teal));
   color: #fff;

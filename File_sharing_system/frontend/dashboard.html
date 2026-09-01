@@ -14,15 +14,17 @@
         <span class="brand-name">DocFile</span>
       </div>
 
-
+      <!-- Navigation + upload button as one block -->
       <nav class="sidebar-nav">
         <a href="dashboard" class="active">My documents</a>
         <a href="public">Public folder</a>
+        <button id="newUploadBtn" class="btn-new" style="margin-bottom:0; width:100%;">
+          <span style="font-size:16px;">&#8593;</span> New upload
+        </button>
       </nav>
+
       <input type="file" id="fileInput" hidden multiple />
-      <button id="newUploadBtn" class="btn-new">
-        <span style="font-size:16px;">&#8593;</span> New upload
-      </button>
+
       <div class="sidebar-footer">
         <div class="sidebar-user" id="sidebarUser" hidden>
           <div class="sidebar-user-avatar" id="sidebarUserAvatar"></div>
