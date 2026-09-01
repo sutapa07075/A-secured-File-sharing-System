@@ -23,15 +23,20 @@
 
       <!-- Sign In Form -->
       <form id="signinForm" class="auth-form" role="tabpanel" aria-label="Sign in">
+        <label for="name">Email Id</label>
         <input type="email" id="signinEmail" class="modal-input" placeholder="Email address" required autocomplete="email" />
+        <label for="name">Password</label>
         <input type="password" id="signinPassword" class="modal-input" placeholder="Password" required autocomplete="current-password" />
         <button type="submit" class="btn-primary">Sign in</button>
       </form>
 
       <!-- Register Form -->
       <form id="registerForm" class="auth-form" hidden role="tabpanel" aria-label="Create account">
+        <label for="name">Name</label>
         <input type="text" id="registerName" class="modal-input" placeholder="Full name" autocomplete="name" />
+        <label for="name">Email Id</label>
         <input type="email" id="registerEmail" class="modal-input" placeholder="Email address" required autocomplete="email" />
+        <label for="name">Password</label>
         <input type="password" id="registerPassword" class="modal-input" placeholder="Password (min. 8 characters)" required autocomplete="new-password" />
         <button type="submit" class="btn-primary">Create account</button>
       </form>
