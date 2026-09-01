@@ -12,7 +12,7 @@
   --accent: #002375;
   --accent-dim: #1750d4;
   --accent-teal: #085b9a;
-  --accent-teal-dim: #3a9f8a;   /* kept as you had */
+  --accent-teal-dim: #3a9f8a;
   --warn: #ff6b6b;
   --text: #ffffff;
   --text-dim: #e6e7e9;
@@ -109,8 +109,8 @@ button {
 }
 .btn-primary:hover {
   transform: translateY(-2px);
-  border-color: var(--text-muted);   /* your custom hover */
-  border-radius: 2px;               /* your custom hover */
+  border-color: var(--text-muted);
+  border-radius: 2px;
 }
 .btn-primary:active {
   transform: translateY(0);
@@ -139,8 +139,8 @@ button {
   color: #fff;
   border: none;
   border-radius: var(--radius-sm);
-  padding: 9px 14px;
-  font-size: 15px;
+  padding: 12px 14px;
+  font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
   margin-bottom: 22px;
@@ -311,7 +311,11 @@ button {
   box-shadow: 0 0 0 4px rgba(0, 35, 117, 0.15);
 }
 
-/* ----- App shell (sidebar) ----- */
+/* ============================================================
+   LAYOUTS
+   ============================================================ */
+
+/* ----- App shell (sidebar layout) ----- */
 .app-shell {
   display: flex;
   min-height: 100vh;
@@ -358,11 +362,11 @@ button {
 }
 .sidebar-nav a:hover {
   background: var(--panel-2);
-  color: rgb(150, 213, 237);
+  color: var(--text);
 }
 .sidebar-nav a.active {
   background: var(--panel-2);
-  color: white;
+  color: var(--accent);
   font-weight: 600;
 }
 .sidebar-nav a.active::before {
@@ -446,10 +450,167 @@ button {
 .main-content .section-head h2 {
   font-size: 22px;
 }
-.hint {
-  color: var(--text-dim);
-  font-size: 12.5px;
+
+/* ----- Topbar (for ZK page) ----- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
 }
+
+/* ----- Dashboard container (ZK page) ----- */
+.dashboard {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+.dashboard .zk-explainer {
+  color: var(--text-dim);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 32px;
+  padding: 16px 20px;
+  background: var(--panel-2);
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--accent);
+}
+.dashboard .zk-explainer strong {
+  color: var(--text);
+}
+
+/* ----- Upload zone (reusable) ----- */
+.upload-zone {
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  padding: 40px 24px;
+  text-align: center;
+  background: var(--panel);
+  transition: border-color var(--transition), background var(--transition);
+}
+.upload-zone.dragover {
+  border-color: var(--accent);
+  background: var(--panel-2);
+}
+.upload-icon {
+  font-size: 28px;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 10px;
+}
+.upload-zone p {
+  margin: 4px 0;
+}
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-decoration: underline;
+}
+.upload-options {
+  margin-top: 16px;
+  text-align: left;
+}
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.checkbox-row input {
+  margin-top: 2px;
+  accent-color: var(--accent);
+}
+.upload-options input[type="text"] {
+  width: 100%;
+  margin-top: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 9px 10px;
+  font-size: 13px;
+  font-family: inherit;
+}
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+.progress-track {
+  flex: 1;
+  height: 6px;
+  background: var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
+#progressLabel {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  width: 40px;
+  text-align: right;
+}
+
+/* ----- Document list (column, for ZK page) ----- */
+.doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.doc-list .doc-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  transition: border-color var(--transition), background var(--transition);
+}
+.doc-list .doc-row:hover {
+  border-color: var(--accent-dim);
+  background: var(--panel-2);
+}
+.doc-list .doc-icon {
+  color: var(--accent);
+  font-size: 16px;
+}
+.doc-list .doc-meta {
+  flex: 1;
+  min-width: 0;
+}
+.doc-list .doc-name {
+  font-size: 14.5px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.doc-list .doc-sub {
+  color: var(--text-dim);
+  font-size: 12px;
+  margin-top: 2px;
+}
+.doc-list .doc-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ----- Empty state ----- */
 .empty-state {
   color: var(--text-dim);
   font-size: 14px;
@@ -458,8 +619,23 @@ button {
   border: 1px dashed var(--line);
   border-radius: 12px;
 }
+.hint {
+  color: var(--text-dim);
+  font-size: 12.5px;
+}
 
-/* ----- Document grid (cards) ----- */
+/* ----- Section head (reused) ----- */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 20px;
+}
+.section-head h2 {
+  font-size: 22px;
+}
+
+/* ----- Document grid (cards, for dashboard/public) ----- */
 .doc-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -551,90 +727,6 @@ button {
   padding: 2px 7px;
   border-radius: 4px;
   letter-spacing: 0.03em;
-}
-
-/* ----- Upload zone (dashboard) ----- */
-.upload-zone {
-  border: 1px dashed var(--line);
-  border-radius: var(--radius);
-  padding: 40px 24px;
-  text-align: center;
-  background: var(--panel);
-  transition: border-color var(--transition), background var(--transition);
-}
-.upload-zone.dragover {
-  border-color: var(--accent);
-  background: var(--panel-2);
-}
-.upload-icon {
-  font-size: 22px;
-  color: var(--accent);
-  display: block;
-  margin-bottom: 10px;
-}
-.upload-zone p {
-  margin: 4px 0;
-}
-.link-btn {
-  background: none;
-  border: none;
-  color: var(--accent);
-  cursor: pointer;
-  font: inherit;
-  padding: 0;
-  text-decoration: underline;
-}
-.upload-options {
-  margin-top: 16px;
-  text-align: left;
-}
-.checkbox-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 12.5px;
-  color: var(--text-dim);
-  cursor: pointer;
-}
-.checkbox-row input {
-  margin-top: 2px;
-  accent-color: var(--accent);
-}
-.upload-options input[type="text"] {
-  width: 100%;
-  margin-top: 10px;
-  background: var(--panel-2);
-  border: 1px solid var(--line);
-  color: var(--text);
-  border-radius: 7px;
-  padding: 9px 10px;
-  font-size: 13px;
-  font-family: inherit;
-}
-.progress-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 18px;
-}
-.progress-track {
-  flex: 1;
-  height: 6px;
-  background: var(--line);
-  border-radius: 3px;
-  overflow: hidden;
-}
-.progress-fill {
-  height: 100%;
-  width: 0%;
-  background: var(--accent);
-  transition: width 0.2s ease;
-}
-#progressLabel {
-  font-size: 12.5px;
-  color: var(--text-dim);
-  width: 40px;
-  text-align: right;
 }
 
 /* ----- Modals ----- */
@@ -885,7 +977,7 @@ button {
   gap: 8px;
 }
 
-/* ----- Toasts (your exact styles, extended with missing pieces) ----- */
+/* ----- Toasts (your exact styles) ----- */
 .toast-container {
   position: fixed;
   left: 50%;
@@ -976,6 +1068,14 @@ button {
   .main-content {
     padding: 24px 16px 60px;
   }
+  .topbar {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .dashboard {
+    padding: 20px 16px 60px;
+  }
 }
 
 @media (max-width: 520px) {
@@ -1008,6 +1108,13 @@ button {
   }
   .doc-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+  .doc-list .doc-row {
+    flex-wrap: wrap;
+  }
+  .doc-list .doc-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
 
