@@ -61,7 +61,7 @@ h1, h2, h3, h4 {
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, rgb(255, 136, 0), rgb(255, 94, 0));
+  background: linear-gradient(135deg, var(--accent), var(--accent-teal));
   border-radius: var(--radius-xs);
   color: #fff;
   font-size: 18px;
@@ -74,7 +74,7 @@ h1, h2, h3, h4 {
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, var(--accent), var(--accent-teal));
+ background: linear-gradient(135deg, rgb(255, 136, 0), rgb(255, 94, 0));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
