@@ -1,91 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>DocFile</title>
-<link rel="stylesheet" href="css/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DocFile · Sign in</title>
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
   <main class="auth-screen">
-    <div class="auth-card">
+    <div class="auth-card" role="main" aria-labelledby="auth-heading">
+      <!-- Brand -->
       <div class="brand" style="justify-content:center; margin-bottom:28px;">
-        <span class="brand-mark">&#9633;</span>
+        <span class="brand-mark" aria-hidden="true">D</span>
         <span class="brand-name">DocFile</span>
       </div>
 
-      <div class="auth-tabs">
-        <button class="auth-tab active" data-tab="signin">Sign in</button>
-        <button class="auth-tab" data-tab="register">Create account</button>
+      <!-- Tabs -->
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab active" data-tab="signin" role="tab" aria-selected="true" aria-controls="signinForm">Sign in</button>
+        <button class="auth-tab" data-tab="register" role="tab" aria-selected="false" aria-controls="registerForm">Create account</button>
       </div>
 
-      <form id="signinForm" class="auth-form">
-        <input type="email" id="signinEmail" class="modal-input" placeholder="Email" required autocomplete="email" />
+      <!-- Sign In Form -->
+      <form id="signinForm" class="auth-form" role="tabpanel" aria-label="Sign in">
+        <input type="email" id="signinEmail" class="modal-input" placeholder="Email address" required autocomplete="email" />
         <input type="password" id="signinPassword" class="modal-input" placeholder="Password" required autocomplete="current-password" />
         <button type="submit" class="btn-primary">Sign in</button>
       </form>
 
-      <form id="registerForm" class="auth-form" hidden>
-        <input type="text" id="registerName" class="modal-input" placeholder="Name" autocomplete="name" />
-        <input type="email" id="registerEmail" class="modal-input" placeholder="Email" required autocomplete="email" />
+      <!-- Register Form -->
+      <form id="registerForm" class="auth-form" hidden role="tabpanel" aria-label="Create account">
+        <input type="text" id="registerName" class="modal-input" placeholder="Full name" autocomplete="name" />
+        <input type="email" id="registerEmail" class="modal-input" placeholder="Email address" required autocomplete="email" />
         <input type="password" id="registerPassword" class="modal-input" placeholder="Password (min. 8 characters)" required autocomplete="new-password" />
         <button type="submit" class="btn-primary">Create account</button>
       </form>
 
-      <div class="auth-divider"><span>or</span></div>
+      <div class="auth-divider" aria-hidden="true"><span>or continue with</span></div>
 
+      <!-- Google -->
       <a class="btn-google" id="googleLoginBtn" href="#">
-        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.98v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.98A9 9 0 0 0 0 9c0 1.45.35 2.83.98 4.03l2.97-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .98 4.97l2.97 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
-        Continue with Google
+        <svg width="20" height="20" viewBox="0 0 18 18" aria-hidden="true">
+          <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z" />
+          <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.98v2.33A9 9 0 0 0 9 18z" />
+          <path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.98A9 9 0 0 0 0 9c0 1.45.35 2.83.98 4.03l2.97-2.33z" />
+          <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .98 4.97l2.97 2.33C4.66 5.17 6.65 3.58 9 3.58z" />
+        </svg>
+        <span>Continue with Google</span>
       </a>
     </div>
   </main>
-  <script src="js/toast.js"></script>
+
+  <div class="toast-container" id="toastContainer" role="status" aria-live="polite"></div>
+
   <script>
-    const API_BASE = ['localhost', '127.0.0.1'].includes(window.location.hostname)
-      ? window.location.origin.replace(/:\d+$/, ':4000') // local dev: frontend and backend on different ports
-      : ''; // production: same-origin, routed to the real backend via the hosting platform's rewrites/proxy
-    document.getElementById('googleLoginBtn').href = `${API_BASE}/api/auth/google`;
+    // ===== Toast system =====
+    const toastContainer = document.getElementById('toastContainer');
 
-    document.querySelectorAll('.auth-tab').forEach((tab) => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.auth-tab').forEach((t) => t.classList.remove('active'));
-        tab.classList.add('active');
-        document.getElementById('signinForm').hidden = tab.dataset.tab !== 'signin';
-        document.getElementById('registerForm').hidden = tab.dataset.tab !== 'register';
+    function toast(message, options = {}) {
+      const { type = 'info', duration = 4200 } = options;
+      const el = document.createElement('div');
+      el.className = `toast toast-${type}`;
+      const icon = type === 'error' ? '✕' : type === 'success' ? '✓' : 'ℹ';
+      el.innerHTML = `
+        <div class="toast-content">
+          <span class="toast-icon">${icon}</span>
+          <span>${message}</span>
+        </div>
+      `;
+      toastContainer.appendChild(el);
+      requestAnimationFrame(() => el.classList.add('toast-show'));
+      const timer = setTimeout(() => {
+        el.classList.remove('toast-show');
+        setTimeout(() => { if (el.parentNode) el.remove(); }, 350);
+      }, duration);
+      el.addEventListener('click', () => {
+        clearTimeout(timer);
+        el.classList.remove('toast-show');
+        setTimeout(() => { if (el.parentNode) el.remove(); }, 350);
       });
-    });
-
-    async function submitAuth(path, body) {
-      const res = await fetch(`${API_BASE}${path}`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        toast(data.error || 'Something went wrong', { type: 'error' });
-        return;
-      }
-      window.location.href = '/dashboard';
     }
 
-    document.getElementById('signinForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      submitAuth('/api/auth/login', {
-        email: document.getElementById('signinEmail').value.trim(),
-        password: document.getElementById('signinPassword').value
+    // ===== Auth tabs =====
+    const tabs = document.querySelectorAll('.auth-tab');
+    const signinForm = document.getElementById('signinForm');
+    const registerForm = document.getElementById('registerForm');
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((t) => {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+        });
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
+        const isSignin = tab.dataset.tab === 'signin';
+        signinForm.hidden = !isSignin;
+        registerForm.hidden = isSignin;
       });
     });
 
+    // ===== API base =====
+    const API_BASE = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+      ? window.location.origin.replace(/:\d+$/, ':4000')
+      : '';
+
+    document.getElementById('googleLoginBtn').href = `${API_BASE}/api/auth/google`;
+
+    // ===== Submit helper =====
+    async function submitAuth(path, body) {
+      try {
+        const res = await fetch(`${API_BASE}${path}`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          toast(data.error || 'Something went wrong', { type: 'error' });
+          return;
+        }
+        window.location.href = '/dashboard';
+      } catch {
+        toast('Network error. Please try again.', { type: 'error' });
+      }
+    }
+
+    // ===== Sign in =====
+    document.getElementById('signinForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('signinEmail').value.trim();
+      const password = document.getElementById('signinPassword').value;
+      if (!email || !password) {
+        toast('Please fill in all fields.', { type: 'error' });
+        return;
+      }
+      submitAuth('/api/auth/login', { email, password });
+    });
+
+    // ===== Register =====
     document.getElementById('registerForm').addEventListener('submit', (e) => {
       e.preventDefault();
+      const name = document.getElementById('registerName').value.trim();
+      const email = document.getElementById('registerEmail').value.trim();
+      const password = document.getElementById('registerPassword').value;
+      if (!email || !password) {
+        toast('Please fill in all fields.', { type: 'error' });
+        return;
+      }
+      if (password.length < 8) {
+        toast('Password must be at least 8 characters.', { type: 'error' });
+        return;
+      }
       submitAuth('/api/auth/register', {
-        email: document.getElementById('registerEmail').value.trim(),
-        password: document.getElementById('registerPassword').value,
-        displayName: document.getElementById('registerName').value.trim()
+        email,
+        password,
+        displayName: name || undefined
       });
+    });
+
+    // ===== Dismiss toasts with Escape =====
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.toast').forEach((t) => {
+          t.classList.remove('toast-show');
+          setTimeout(() => { if (t.parentNode) t.remove(); }, 350);
+        });
+      }
     });
   </script>
 </body>
