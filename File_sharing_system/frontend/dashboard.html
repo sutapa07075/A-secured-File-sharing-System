@@ -14,19 +14,19 @@
         <span class="brand-name">DocFile</span>
       </div>
 
-      <input type="file" id="fileInput" hidden multiple />
+      <input type="file" id="fileInput" hidden multiple aria-label="Choose files to upload" />
       <button id="newUploadBtn" class="btn-new">
-        <span style="font-size:16px;">&#8593;</span> New upload
+        <span style="font-size:16px;" aria-hidden="true">&#8593;</span> New upload
       </button>
 
-      <nav class="sidebar-nav">
-        <a href="dashboard" class="active">My documents</a>
-        <a href="public">Public folder</a>
+      <nav class="sidebar-nav" aria-label="Main">
+        <a href="dashboard" class="active" aria-current="page"><span class="nav-icon" aria-hidden="true">&#128193;</span>My documents</a>
+        <a href="public"><span class="nav-icon" aria-hidden="true">&#127760;</span>Public folder</a>
       </nav>
 
       <div class="sidebar-footer">
         <div class="sidebar-user" id="sidebarUser" hidden>
-          <div class="sidebar-user-avatar" id="sidebarUserAvatar"></div>
+          <div class="sidebar-user-avatar" id="sidebarUserAvatar" aria-hidden="true"></div>
           <div class="sidebar-user-info">
             <div class="sidebar-user-name" id="sidebarUserName"></div>
             <div class="sidebar-user-email" id="sidebarUserEmail"></div>
@@ -38,10 +38,10 @@
 
     <main class="main-content" id="dropZone">
       <div class="section-head" style="margin-top:0;">
-        <h2>Your documents</h2>
+        <h1>Your documents</h1>
         <button id="refreshBtn" class="btn-ghost small">Refresh</button>
       </div>
-      <div id="docList" class="doc-grid"></div>
+      <div id="docList" class="doc-grid" aria-live="polite"></div>
       <p id="emptyState" class="empty-state" hidden>Nothing here yet — click "New upload" or drop a file anywhere on this page.</p>
     </main>
   </div>
@@ -52,39 +52,42 @@
   </div>
 
   <!-- Upload queue panel (Drive-style, bottom-right) -->
-  <div id="uploadQueuePanel" class="upload-queue-panel" hidden>
+  <div id="uploadQueuePanel" class="upload-queue-panel" hidden role="status" aria-live="polite">
     <div class="uqp-header">
       <span id="uqpTitle">Uploading…</span>
       <div class="uqp-header-actions">
-        <button id="uqpMinimize" title="Minimize">&#8211;</button>
-        <button id="uqpClose" title="Close">&#10005;</button>
+        <button id="uqpMinimize" aria-label="Minimize upload panel" title="Minimize">&#8211;</button>
+        <button id="uqpClose" aria-label="Close upload panel" title="Close">&#10005;</button>
       </div>
     </div>
     <div id="uqpList" class="uqp-list"></div>
   </div>
 
   <!-- Share modal -->
-  <div id="shareModal" class="modal-backdrop" hidden>
+  <div id="shareModal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
     <div class="modal">
       <div class="modal-head">
-        <h3>Share "<span id="shareDocName"></span>"</h3>
+        <h2 id="shareModalTitle">Share "<span id="shareDocName"></span>"</h2>
         <button id="closeShareModal" class="btn-ghost small">Close</button>
       </div>
       <div class="modal-body">
         <div class="share-option">
-          <h4>Anyone with the link</h4>
+          <h3>Anyone with the link</h3>
           <div class="row">
+            <label class="sr-only" for="linkRole">Link permission</label>
             <select id="linkRole"><option value="view">Can view</option><option value="edit">Can edit</option></select>
             <button id="createLinkBtn" class="btn-primary small">Create link</button>
           </div>
           <div id="linkResult" class="link-result" hidden>
+            <label class="sr-only" for="linkResultInput">Share link</label>
             <input id="linkResultInput" readonly />
             <button id="copyLinkBtn" class="btn-ghost small">Copy</button>
           </div>
         </div>
         <div class="share-option">
-          <h4>Invite a specific person</h4>
+          <h3>Invite a specific person</h3>
           <div class="row">
+            <label class="sr-only" for="granteeEmail">Email address to invite</label>
             <input id="granteeEmail" type="email" placeholder="name@company.com" />
             <button id="checkEmailBtn" class="btn-ghost small">Check</button>
           </div>
@@ -92,8 +95,9 @@
             <img id="granteeAvatar" src="" alt="" style="width:28px;height:28px;border-radius:50%;" />
             <span id="granteeName" style="flex:1;font-size:13px;"></span>
           </div>
-          <div id="granteeNotFound" class="hint" hidden style="color:var(--warn);margin-top:8px;"></div>
+          <div id="granteeNotFound" class="hint" hidden role="alert" style="color:var(--warn);margin-top:8px;"></div>
           <div class="row" style="margin-top:10px;">
+            <label class="sr-only" for="granteeRole">Invite permission</label>
             <select id="granteeRole"><option value="view">Can view</option><option value="edit">Can edit</option></select>
             <button id="inviteBtn" class="btn-primary small" disabled>Invite</button>
           </div>
@@ -103,14 +107,15 @@
   </div>
 
   <!-- Visibility modal (make public / make private) -->
-  <div id="visibilityModal" class="modal-backdrop" hidden>
+  <div id="visibilityModal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="visibilityModalTitle">
     <div class="modal" style="max-width:400px;">
       <div class="modal-head">
-        <h3 id="visibilityModalTitle">Make public</h3>
+        <h2 id="visibilityModalTitle">Make public</h2>
         <button id="closeVisibilityModal" class="btn-ghost small">Close</button>
       </div>
       <div class="modal-body">
         <p class="hint" id="visibilityModalHint">Any signed-in user will be able to find and download this file in the Public folder.</p>
+        <label class="sr-only" for="visibilityDescriptionInput">Description (optional)</label>
         <input type="text" id="visibilityDescriptionInput" class="modal-input" placeholder="What does this file contain? (optional, shown in the public folder)" />
         <button id="visibilityConfirmBtn" class="btn-primary small" style="margin-top:14px;">Confirm</button>
       </div>

@@ -1,23 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Test Results</title>
-<link rel="stylesheet" href="/css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Results</title>
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body class="app-body">
-  <div class="container">
-    <div class="page-header">
-      <h1 id="testTitle">Loading…</h1>
-    </div>
-    <div id="resultsTable"></div>
+  <!-- Skip link for keyboard users -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <div id="gradingPanel" style="display:none; margin-top:32px;">
-      <h2 id="gradingStudent" style="font-family:-apple-system,sans-serif; font-size:18px;"></h2>
-      <div id="gradingItems"></div>
+  <!-- Main content landmark -->
+  <main id="main-content">
+    <div class="container">
+      <div class="page-header">
+        <h1 id="testTitle">Loading…</h1>
+      </div>
+
+      <div id="resultsTable" role="region" aria-label="Test submissions"></div>
+
+      <!-- Grading panel (initially hidden) -->
+      <div id="gradingPanel" style="display:none; margin-top:32px;">
+        <h2 id="gradingStudent" style="font-family:-apple-system,sans-serif; font-size:18px;"></h2>
+        <div id="gradingItems"></div>
+      </div>
     </div>
-  </div>
+  </main>
 
   <script src="/js/session-guard.js"></script>
   <script src="/js/api.js"></script>

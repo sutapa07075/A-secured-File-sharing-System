@@ -25,6 +25,30 @@ body {
   padding: 24px;
 }
 
+.skip-link {
+  position: absolute;
+  top: -999px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: #fff;
+  padding: 12px 24px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 0 0 8px 8px;
+  z-index: 999;
+}
+.skip-link:focus {
+  top: 0;
+  outline: 3px solid #fff;
+  outline-offset: -3px;
+}
+
+main {
+  width: 100%;
+}
+
 .card {
   width: 100%;
   max-width: 420px;
@@ -50,6 +74,19 @@ h1 {
   font-weight: 600;
 }
 
+h2 {
+  font-family: 'Iowan Old Style', Georgia, serif;
+  font-size: 22px;
+  margin: 0 0 16px;
+  font-weight: 600;
+}
+
+h3 {
+  font-size: 17px;
+  margin: 6px 0 4px;
+  font-weight: 600;
+}
+
 label {
   display: block;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -61,7 +98,8 @@ label {
 
 input[type="email"],
 input[type="password"],
-input[type="text"] {
+input[type="text"],
+input[type="number"] {
   width: 100%;
   padding: 11px 12px;
   border: 1px solid var(--line);
@@ -71,7 +109,9 @@ input[type="text"] {
   background: #fdfcfb;
   color: var(--ink);
 }
-
+input::placeholder {
+  color: #6b6b6b;
+}
 input:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
@@ -80,6 +120,10 @@ input:focus {
 button {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   cursor: pointer;
+}
+button:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .btn-primary {
@@ -106,7 +150,7 @@ button {
   margin: 26px 0 18px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 12px;
-  color: #8a8478;
+  color: #5c5a54;
 }
 .divider::before, .divider::after {
   content: "";
@@ -139,9 +183,13 @@ button {
   margin-top: 22px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 14px;
-  color: #5c5750;
+  color: #3d3a35;
 }
 .footer-link a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.footer-link a:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 
 .error-banner {
   display: none;
@@ -181,7 +229,7 @@ button {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 14px;
   font-weight: 600;
-  color: #8a8478;
+  color: #4a4742;
   cursor: pointer;
 }
 .role-option:first-child { border-right: 1px solid var(--line); }
@@ -192,7 +240,7 @@ button {
   align-items: center;
   gap: 8px;
   padding: 3px 0;
-  color: #8a8478;
+  color: #4a4742;
 }
 .rules li .mark {
   width: 16px;
@@ -230,7 +278,7 @@ button {
 }
 .timeout-toast.show { display: block; }
 
-/* ---------- Dashboard layout additions ---------- */
+/* ---------- Dashboard layout ---------- */
 body.app-body {
   display: block;
   align-items: initial;
@@ -248,7 +296,7 @@ body.app-body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 .topbar .brand { font-weight: 700; font-size: 16px; color: var(--accent); }
-.topbar .userbox { display: flex; align-items: center; gap: 14px; font-size: 14px; color: #5c5750; }
+.topbar .userbox { display: flex; align-items: center; gap: 14px; font-size: 14px; color: #3d3a35; }
 .topbar button {
   padding: 8px 14px;
   border: 1px solid var(--line);
@@ -296,6 +344,10 @@ body.app-body {
 .btn-danger { background: #fff; border: 1px solid #e6b9b4; color: var(--error); }
 .btn-danger:hover { background: var(--error-soft); }
 .btn-small { padding: 6px 10px; font-size: 12px; }
+.btn:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 
 .grid {
   display: grid;
@@ -315,7 +367,7 @@ body.app-body {
 .tile:hover { border-color: var(--accent); }
 .tile .tile-subject { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
 .tile h3 { margin: 6px 0 4px; font-size: 17px; }
-.tile p { margin: 0; font-size: 13px; color: #8a8478; }
+.tile p { margin: 0; font-size: 13px; color: #4a4742; }
 
 .badge {
   display: inline-block;
@@ -326,8 +378,11 @@ body.app-body {
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
-.badge-published { background: var(--accent-soft); color: var(--accent); }
-.badge-draft { background: #f1efeb; color: #8a8478; }
+.badge-published { background: var(--accent-soft); color:rgb(1, 60, 1); }
+.badge-draft {
+  background: #f6b9b9;
+  color: #4a0001;
+}
 .badge-graded { background: var(--accent-soft); color: var(--accent); }
 .badge-pending { background: #fbeecb; color: #8a5a00; }
 
@@ -345,7 +400,13 @@ table.data-table th, table.data-table td {
   padding: 10px 14px;
   border-bottom: 1px solid var(--line);
 }
-table.data-table th { background: #f7f5f2; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #8a8478; }
+table.data-table th {
+  background: #f7f5f2;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #4a4742;
+}
 table.data-table tr:last-child td { border-bottom: none; }
 
 .form-panel {
@@ -375,7 +436,12 @@ table.data-table tr:last-child td { border-bottom: none; }
 }
 .option-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
 .option-row input[type="text"] { flex: 1; padding: 8px 10px; }
-.empty-state { color: #8a8478; font-size: 14px; padding: 24px 0; text-align: center; }
+.empty-state {
+  color: #4a4742;
+  font-size: 14px;
+  padding: 24px 0;
+  text-align: center;
+}
 .note-banner {
   background: var(--accent-soft);
   color: var(--accent);

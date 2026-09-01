@@ -1,40 +1,17 @@
 {
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "https://internet-technology-lab.onrender.com/api/$1"
-    },
-    {
-      "source": "/auth/(.*)",
-      "destination": "https://internet-technology-lab.onrender.com/api/auth/$1"
-    },
-    {
-      "source": "/dashboard",
-      "destination": "/dashboard.html"
-    },
-    {
-      "source": "/reader",
-      "destination": "/reader.html"
-    },
-    {
-      "source": "/share",
-      "destination": "/share.html"
-    },
-    {
-      "source": "/index",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/public",
-      "destination": "/public.html"
-    },
-    {
-      "source": "/zk",
-      "destination": "/zk.html"
-    },
-    {
-      "source": "/zk-share",
-      "destination": "/zk-share.html"
-    }
+    { "source": "/api/(.*)", "destination": "https://internet-technology-lab.onrender.com/api/$1" },
+
+    { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/reader", "destination": "/reader.html" },
+    { "source": "/index", "destination": "/index.html" },
+    { "source": "/public", "destination": "/public.html" },
+    { "source": "/zk", "destination": "/zk.html" },
+
+    { "source": "/share", "destination": "/share.html" },
+    { "source": "/share/:id*", "destination": "/share.html" },
+
+    { "source": "/zk-share", "destination": "/zk-share.html" },
+    { "source": "/zk-share/:id*", "destination": "/zk-share.html" }
   ]
 }
