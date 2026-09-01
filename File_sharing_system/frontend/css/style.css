@@ -358,7 +358,7 @@ button {
 }
 .sidebar-nav a:hover {
   background: var(--panel-2);
-  color: var(--text);
+  color: rgb(150, 213, 237);
 }
 .sidebar-nav a.active {
   background: var(--panel-2);
