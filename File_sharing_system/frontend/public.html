@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Vault — Public folder</title>
+<title>DocFile — Public folder</title>
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -11,7 +11,7 @@
     <aside class="sidebar">
       <div class="brand" style="margin-bottom:24px;">
         <span class="brand-mark">&#9633;</span>
-        <span class="brand-name">Vault</span>
+        <span class="brand-name">DocFile</span>
       </div>
 
       <a href="dashboard" class="btn-new" style="text-decoration:none;">
@@ -40,6 +40,9 @@
         <h2>Public folder</h2>
         <button id="refreshBtn" class="btn-ghost small">Refresh</button>
       </div>
+      <p class="hint" style="margin-bottom:22px;">
+        Files anyone signed in to DocFile has chosen to make public — view or download any of these.
+      </p>
       <div id="docList" class="doc-grid"></div>
       <p id="emptyState" class="empty-state" hidden>No public files yet.</p>
     </main>
@@ -51,7 +54,9 @@
     if (window.pdfjsLib) {
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     }
-    const API_BASE = window.location.origin.replace(/:\d+$/, ':4000');
+    const API_BASE = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+      ? window.location.origin.replace(/:\d+$/, ':4000') // local dev: frontend and backend on different ports
+      : ''; // production: same-origin, routed to the real backend via the hosting platform's rewrites/proxy
 
     async function api(path, opts = {}) {
       const res = await fetch(`${API_BASE}${path}`, { credentials: 'include', ...opts });
@@ -80,11 +85,11 @@
       return div.innerHTML;
     }
     function thumbFallbackIcon(mimeType = '') {
-      if (mimeType === 'application/pdf') return '&#128196;';
-      if (mimeType.startsWith('image/')) return '&#128247;';
-      if (mimeType.startsWith('video/')) return '&#127909;';
-      if (mimeType.startsWith('audio/')) return '&#127925;';
-      return '&#128196;';
+      if (mimeType === 'application/pdf') return 'PDF';
+      if (mimeType.startsWith('image/')) return 'IMG';
+      if (mimeType.startsWith('video/')) return 'VID';
+      if (mimeType.startsWith('audio/')) return 'AUD';
+      return 'FILE';
     }
 
     async function generateThumbnail(doc, thumbEl) {

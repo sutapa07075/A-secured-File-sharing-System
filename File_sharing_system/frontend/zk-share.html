@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Vault ZK — Shared document</title>
+<title>DocFile ZK — Shared document</title>
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -11,13 +11,12 @@
     <div class="auth-card" style="max-width:480px;">
       <div class="brand">
         <span class="brand-mark">&#9633;</span>
-        <span class="brand-name">Vault <span class="zk-badge">ZK</span></span>
+        <span class="brand-name">DocFile <span class="zk-badge">ZK</span></span>
       </div>
       <h1 id="statusTitle">Unlocking…</h1>
       <p class="sub" id="statusSub">Decrypting locally in your browser. The unlocking key was never sent to any server.</p>
       <div id="fileCard" hidden style="margin-top:20px;">
         <div class="doc-row">
-          <span class="doc-icon">&#128274;</span>
           <div class="doc-meta">
             <div class="doc-name" id="fileName"></div>
             <div class="doc-sub" id="fileMeta"></div>
@@ -30,7 +29,9 @@
   <script src="js/webcrypto.js"></script>
   <script src="js/toast.js"></script>
   <script>
-    const ZK_API_BASE = window.location.origin.replace(/:\d+$/, ':4000');
+    const ZK_API_BASE = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+      ? window.location.origin.replace(/:\d+$/, ':4000')
+      : '';
 
     async function run() {
       const params = new URLSearchParams(window.location.search);

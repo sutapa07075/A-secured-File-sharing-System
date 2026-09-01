@@ -1,4 +1,4 @@
-# Vault — Secure Document Share
+# DocFile — Secure Document Share
 
 Backend: Node.js + Express + PostgreSQL (NeonDB) + Backblaze B2
 Frontend: vanilla HTML/CSS/JS (no build step)

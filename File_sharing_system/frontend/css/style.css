@@ -232,7 +232,7 @@ h1, h2, h3, h4 { font-family: 'Fraunces', serif; font-weight: 600; margin: 0; }
   border-bottom: 1px solid var(--line); font-size: 12.5px;
 }
 .uqp-item:last-child { border-bottom: none; }
-.uqp-icon { width: 20px; text-align: center; flex-shrink: 0; }
+.uqp-icon { width: 32px; text-align: center; flex-shrink: 0; font-size: 9px; font-weight: 700; letter-spacing: 0.05em; color: var(--text-dim); }
 .uqp-item-body { flex: 1; min-width: 0; }
 .uqp-item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .uqp-item-track { height: 3px; background: var(--line); border-radius: 2px; margin-top: 5px; overflow: hidden; }
@@ -262,7 +262,10 @@ h1, h2, h3, h4 { font-family: 'Fraunces', serif; font-weight: 600; margin: 0; }
   position: relative; overflow: hidden; cursor: pointer;
 }
 .doc-thumb img, .doc-thumb canvas { width: 100%; height: 100%; object-fit: cover; }
-.doc-thumb .doc-thumb-icon { font-size: 32px; color: var(--text-dim); opacity: 0.7; }
+.doc-thumb .doc-thumb-icon {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: var(--text-dim);
+  border: 1px solid var(--line); border-radius: 5px; padding: 4px 10px; opacity: 0.85;
+}
 .doc-card-body { padding: 11px 13px 8px; }
 .doc-card-name {
   font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis;
@@ -354,3 +357,14 @@ h1, h2, h3, h4 { font-family: 'Fraunces', serif; font-weight: 600; margin: 0; }
   .sidebar-footer { margin-top: 0; margin-left: auto; }
   .main-content { padding: 24px 16px 60px; }
 }
+
+/* [hidden] must always win over any component's own display rule (flex/grid/
+   block/etc), regardless of selector order. Several elements toggled via
+   `el.hidden = true/false` in JS — the drop-overlay, auth forms, share-modal
+   result rows, the sidebar user widget — declare their own `display` value
+   unconditionally, and since this stylesheet loads after the browser's
+   built-in `[hidden]{display:none}` rule, equal-specificity ties were going
+   to those component rules instead of hidden, making elements render even
+   while correctly marked hidden. This one rule fixes that everywhere at once,
+   instead of patching each class individually as new ones get added. */
+[hidden] { display: none !important; }

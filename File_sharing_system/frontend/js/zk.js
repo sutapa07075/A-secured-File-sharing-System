@@ -7,7 +7,9 @@ window.addEventListener('pageshow', () => {
   if (progress) progress.hidden = true;
 });
 
-const ZK_API_BASE = window.location.origin.replace(/:\d+$/, ':4000');
+const ZK_API_BASE = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+  ? window.location.origin.replace(/:\d+$/, ':4000')
+  : '';
 
 async function zkApi(path, opts = {}) {
   const res = await fetch(`${ZK_API_BASE}${path}`, { credentials: 'include', ...opts });
@@ -184,7 +186,6 @@ function renderDocRow(doc) {
   const row = document.createElement('div');
   row.className = 'doc-row';
   row.innerHTML = `
-    <span class="doc-icon">&#128274;</span>
     <div class="doc-meta">
       <div class="doc-name">${escapeHtml(doc.filename)}</div>
       <div class="doc-sub">${formatBytes(doc.sizeBytes)} · ${formatDate(doc.createdAt)}</div>

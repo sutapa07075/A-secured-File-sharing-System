@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Vault ZK — Zero-knowledge documents</title>
+<title>DocFile ZK — Zero-knowledge documents</title>
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
       <span class="brand-mark">&#9633;</span>
-      <span class="brand-name">Vault <span class="zk-badge">ZK</span></span>
+      <span class="brand-name">DocFile <span class="zk-badge">ZK</span></span>
     </div>
     <div class="row" style="gap:10px;">
       <a href="dashboard" class="btn-ghost small">Standard mode</a>
@@ -31,7 +31,7 @@
         <p id="unlockTitle"><strong>Unlock your vault</strong></p>
         <p class="hint" id="unlockHint">Enter your vault passphrase to continue. This is separate from your Google password and never leaves your browser.</p>
         <div class="row" style="max-width:340px; margin: 14px auto 0;">
-          <input id="passphraseInput" type="password" placeholder="Vault passphrase" />
+          <input id="passphraseInput" type="password" placeholder="DocFile passphrase" />
           <button id="unlockBtn" class="btn-primary small">Unlock</button>
         </div>
         <p class="hint" id="setupNote" hidden>First time here — this passphrase will be set as your vault passphrase. Write it down: it cannot be recovered if lost.</p>
@@ -89,7 +89,7 @@
             <select id="granteeRole"><option value="view">Can view</option><option value="edit">Can edit</option></select>
             <button id="inviteBtn" class="btn-primary small">Invite</button>
           </div>
-          <p class="hint" style="margin-top:8px;">They must have opened Vault ZK at least once so we have their public key on file.</p>
+          <p class="hint" style="margin-top:8px;">They must have opened DocFile ZK at least once so we have their public key on file.</p>
         </div>
       </div>
     </div>

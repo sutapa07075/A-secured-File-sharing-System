@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Vault</title>
+<title>DocFile</title>
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -11,7 +11,7 @@
     <div class="auth-card">
       <div class="brand" style="justify-content:center; margin-bottom:28px;">
         <span class="brand-mark">&#9633;</span>
-        <span class="brand-name">Vault</span>
+        <span class="brand-name">DocFile</span>
       </div>
 
       <div class="auth-tabs">
@@ -42,7 +42,9 @@
   </main>
   <script src="js/toast.js"></script>
   <script>
-    const API_BASE = window.location.origin.replace(/:\d+$/, ':4000');
+    const API_BASE = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+      ? window.location.origin.replace(/:\d+$/, ':4000') // local dev: frontend and backend on different ports
+      : ''; // production: same-origin, routed to the real backend via the hosting platform's rewrites/proxy
     document.getElementById('googleLoginBtn').href = `${API_BASE}/api/auth/google`;
 
     document.querySelectorAll('.auth-tab').forEach((tab) => {

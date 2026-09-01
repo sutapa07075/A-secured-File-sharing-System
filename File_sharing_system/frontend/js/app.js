@@ -12,7 +12,9 @@ if (window.pdfjsLib) {
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
 
-const API_BASE = window.location.origin.replace(/:\d+$/, ':4000'); // adjust if API is on a different host
+const API_BASE = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+  ? window.location.origin.replace(/:\d+$/, ':4000') // local dev: frontend and backend on different ports
+  : ''; // production: same-origin, routed to the real backend via the hosting platform's rewrites/proxy
 
 async function api(path, opts = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -165,11 +167,11 @@ if (document.getElementById('docList')) {
   }
 
   function thumbFallbackIcon(mimeType = '') {
-    if (mimeType === 'application/pdf') return '&#128196;';
-    if (mimeType.startsWith('image/')) return '&#128247;';
-    if (mimeType.startsWith('video/')) return '&#127909;';
-    if (mimeType.startsWith('audio/')) return '&#127925;';
-    return '&#128196;';
+    if (mimeType === 'application/pdf') return 'PDF';
+    if (mimeType.startsWith('image/')) return 'IMG';
+    if (mimeType.startsWith('video/')) return 'VID';
+    if (mimeType.startsWith('audio/')) return 'AUD';
+    return 'FILE';
   }
 
   // Renders a real thumbnail into the card: images load directly, PDFs get
@@ -265,9 +267,9 @@ if (document.getElementById('docList')) {
   }
 
   function thumbFallbackIconPlain(mimeType = '') {
-    if (mimeType === 'application/pdf') return '📄';
-    if (mimeType.startsWith('image/')) return '🖼️';
-    return '📄';
+    if (mimeType === 'application/pdf') return 'PDF';
+    if (mimeType.startsWith('image/')) return 'IMG';
+    return 'FILE';
   }
 
   function setItemProgress(item, pct) {

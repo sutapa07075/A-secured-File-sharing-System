@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Vault — Reader</title>
+<title>DocFile — Reader</title>
 <link rel="stylesheet" href="css/style.css" />
 <style>
   body { background: var(--ink); }
@@ -38,7 +38,9 @@
   </main>
 
   <script>
-    const API_BASE = window.location.origin.replace(/:\d+$/, ':4000');
+    const API_BASE = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+      ? window.location.origin.replace(/:\d+$/, ':4000') // local dev: frontend and backend on different ports
+      : ''; // production: same-origin, routed to the real backend via the hosting platform's rewrites/proxy
 
     function qsParam(name) {
       return new URLSearchParams(window.location.search).get(name);
