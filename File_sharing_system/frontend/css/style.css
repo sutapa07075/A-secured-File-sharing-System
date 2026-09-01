@@ -362,7 +362,7 @@ button {
 }
 .sidebar-nav a.active {
   background: var(--panel-2);
-  color: var(--accent);
+  color: white;
   font-weight: 600;
 }
 .sidebar-nav a.active::before {
