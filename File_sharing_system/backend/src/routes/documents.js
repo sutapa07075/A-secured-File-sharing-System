@@ -262,8 +262,19 @@ router.get('/', requireAuth, async (req, res) => {
         id: d.id, filename, mimeType: d.mime_type, sizeBytes: d.size_bytes,
         createdAt: d.created_at, isOwner: d.owner_id === req.user.id, isPublic: d.is_public
       };
-    } catch {
-      return { id: d.id, filename: '(decryption error)', mimeType: d.mime_type, createdAt: d.created_at };
+    } catch (err) {
+      // Most common cause: this document was encrypted under a different
+      // KMS_MASTER_KEY than the one this server is currently running with
+      // (e.g. uploaded via a local dev instance, now served from production).
+      // A key mismatch means the wrapped per-file key can never be unwrapped —
+      // that's the encryption working as intended, not data corruption.
+      console.error(`Decryption failed for document ${d.id} (my documents list):`, err.message);
+      // Still include isOwner/isPublic even though the filename couldn't be
+      // decrypted — otherwise the owner has no way to delete a broken record.
+      return {
+        id: d.id, filename: '(decryption error — you can still delete this)', mimeType: d.mime_type,
+        createdAt: d.created_at, isOwner: d.owner_id === req.user.id, isPublic: d.is_public
+      };
     }
   });
 
@@ -298,7 +309,8 @@ router.get('/public', requireAuth, async (req, res) => {
         id: d.id, filename, description, mimeType: d.mime_type, sizeBytes: d.size_bytes,
         createdAt: d.created_at, ownerName: d.owner_name, ownerEmail: d.owner_email
       };
-    } catch {
+    } catch (err) {
+      console.error(`Decryption failed for document ${d.id} (public folder):`, err.message);
       return { id: d.id, filename: '(decryption error)', mimeType: d.mime_type, createdAt: d.created_at };
     }
   });
