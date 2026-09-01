@@ -2,16 +2,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap');
 
 :root {
-  --ink: #12141A;
-  --panel: #1B1E27;
+  --ink: #070707;
+  --panel: #0d0e10;
   --panel-2: #20242F;
   --line: #2B2F3A;
   --paper: #F5F3ED;
   --accent: #6BA8A0;
   --accent-dim: #4E7D77;
   --warn: #C97A5A;
-  --text: #E7E5DD;
-  --text-dim: #9A9CA8;
+  --text: #fdfdfd;
+  --text-dim: #e0e1e5;
   --radius: 10px;
 }
 
