@@ -18,6 +18,7 @@
       <nav class="sidebar-nav">
         <a href="dashboard" class="active">My documents</a>
         <a href="public">Public folder</a>
+        <!-- Button now sits after the two links, both in desktop and mobile toggle -->
         <button id="newUploadBtn" class="btn-new" style="margin-bottom:0; width:100%;">
           <span style="font-size:16px;">&#8593;</span> New upload
         </button>
@@ -52,7 +53,7 @@
     <p>Drop files to upload</p>
   </div>
 
-  <!-- Upload queue panel (Drive-style, bottom-right) -->
+  <!-- Upload queue panel -->
   <div id="uploadQueuePanel" class="upload-queue-panel" hidden>
     <div class="uqp-header">
       <span id="uqpTitle">Uploading…</span>
@@ -103,7 +104,7 @@
     </div>
   </div>
 
-  <!-- Visibility modal (make public / make private) -->
+  <!-- Visibility modal -->
   <div id="visibilityModal" class="modal-backdrop" hidden>
     <div class="modal" style="max-width:400px;">
       <div class="modal-head">
