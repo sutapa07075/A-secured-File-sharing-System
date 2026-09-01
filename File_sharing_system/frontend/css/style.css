@@ -2,8 +2,8 @@
 
 :root {
   /* Colours – more refined dark theme */
-  --ink: #0b0d11;
-  --panel: #13171e;
+  --panel: #0b0d11;
+  --ink: #13171e;
   --panel-2: #181d26;
   --panel-3: #1e2430;
   --line: #242b38;
@@ -14,9 +14,9 @@
   --accent-teal: #4dc9b0;
   --accent-teal-dim: #3a9f8a;
   --warn: #ff6b6b;
-  --text: #f0f2f6;
-  --text-dim: #a8b2c9;
-  --text-muted: #6b7a93;
+  --text: #ffffff;
+  --text-dim: #e6e7e9;
+  --text-muted: #babdc3;
   --radius: 14px;
   --radius-sm: 10px;
   --radius-xs: 8px;
