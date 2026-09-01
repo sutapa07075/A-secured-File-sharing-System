@@ -1,7 +1,9 @@
 # DocFile — Secure Document Share
 
-Backend: Node.js + Express + PostgreSQL (NeonDB) + Backblaze B2
-Frontend: vanilla HTML/CSS/JS (no build step)
+Backend: Node.js + Express + PostgreSQL (NeonDB) + Backblaze B2 (Deployed in Render)
+Frontend: vanilla HTML/CSS/JS (Static pages), Deployed in Vercel
+
+**DEPLOYED: https://internet-technology-lab.vercel.app/**
 
 ## What this gives you
 
@@ -12,7 +14,6 @@ Frontend: vanilla HTML/CSS/JS (no build step)
 - **Leak resistance**: a Postgres leak alone gives an attacker wrapped keys they can't open. A B2
   leak alone gives ciphertext with no keys. Both plus KMS access are needed to read anything.
 - **Google OAuth login**, short-lived JWT access tokens + rotated refresh tokens.
-- **Row-Level Security** in Postgres as defense-in-depth on top of app-level checks.
 - **Sharing**: private / invite-by-email / anyone-with-link, each with view or edit role, expirable.
 - **Resilience**: graceful shutdown, `/health` + `/ready`, circuit breakers + retries around B2/KMS calls.
 - **Observability**: Prometheus metrics at `/metrics`, structured JSON logs (pino), audit log table.
@@ -155,7 +156,7 @@ Any document can be marked public at upload time (checkbox in the upload zone). 
 
 If you're upgrading an existing database, re-run `npm run migrate` — `schema.sql` uses `ADD COLUMN IF NOT EXISTS` for `is_public`, `description_encrypted`, `description_iv`, `description_auth_tag`, so it's safe to re-apply.
 
-## 9. Notes / things to decide before going live
+## 9. Before Live:
 
 - **Zero-knowledge option**: the current design encrypts server-side (server can decrypt via KMS,
   but the database/storage alone cannot). If you want the server to *never* see plaintext even
@@ -165,3 +166,4 @@ If you're upgrading an existing database, re-run `npm run migrate` — `schema.s
   production frontend domain.
 - Set `NODE_ENV=production` and put the API behind Nginx/a load balancer terminating TLS 1.3, per
   the architecture doc.
+
