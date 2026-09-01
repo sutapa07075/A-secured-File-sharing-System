@@ -14,17 +14,15 @@
         <span class="brand-name">DocFile</span>
       </div>
 
-      <!-- Navigation + upload button as one block -->
+      <input type="file" id="fileInput" hidden multiple />
+      <button id="newUploadBtn" class="btn-new">
+        <span style="font-size:16px;">&#8593;</span> New upload
+      </button>
+
       <nav class="sidebar-nav">
         <a href="dashboard" class="active">My documents</a>
         <a href="public">Public folder</a>
-        <!-- Button now sits after the two links, both in desktop and mobile toggle -->
-        <button id="newUploadBtn" class="btn-new" style="margin-bottom:0; width:100%;">
-          <span style="font-size:16px;">&#8593;</span> New upload
-        </button>
       </nav>
-
-      <input type="file" id="fileInput" hidden multiple />
 
       <div class="sidebar-footer">
         <div class="sidebar-user" id="sidebarUser" hidden>
@@ -53,7 +51,7 @@
     <p>Drop files to upload</p>
   </div>
 
-  <!-- Upload queue panel -->
+  <!-- Upload queue panel (Drive-style, bottom-right) -->
   <div id="uploadQueuePanel" class="upload-queue-panel" hidden>
     <div class="uqp-header">
       <span id="uqpTitle">Uploading…</span>
@@ -104,7 +102,7 @@
     </div>
   </div>
 
-  <!-- Visibility modal -->
+  <!-- Visibility modal (make public / make private) -->
   <div id="visibilityModal" class="modal-backdrop" hidden>
     <div class="modal" style="max-width:400px;">
       <div class="modal-head">
